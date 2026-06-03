@@ -4,8 +4,10 @@
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { TokenStore } from 'common_datastore'
 import { RoomStore } from 'common_datastore'
+import { LightSceneStore } from 'common_datastore'
 import { ToastUtils } from 'common_uicomponents'
 import { HomeRepository } from '../repository/HomeRepository.ets'
+import { AirRepository } from 'features_air'
 import type { RoomState } from '../model/HomeModel.ets'
 
 @ObservedV2
@@ -22,10 +24,18 @@ export class HomeViewModel {
   @Trace airMode: number = 0
   @Trace airTemp: number = 24
   @Trace airSpeed: number = 0
-  @Trace lightScene: number = 1
   @Trace goodNightModeOn: boolean = false
+  // 服务状态（选中效果需要@Trace）
+  @Trace disturbModeOn: boolean = false
+  @Trace cleanRoomOn: boolean = false
+  // 保存关闭晚安模式前灯光场景
+  private previousLightScene: number = 1
+
+  // 共享灯光场景Store
+  lightSceneStore: LightSceneStore = LightSceneStore.getInstance()
 
   private repository = new HomeRepository()
+  private airRepository = new AirRepository()
   private tokenStore = TokenStore.getInstance()
   private roomStore = RoomStore.getInstance()
 
@@ -39,6 +49,11 @@ export class HomeViewModel {
       ToastUtils.show('房间号无效')
       return
     }
+
+    // 注册晚安模式回调
+    this.lightSceneStore.registerGoodNightCallback((enabled: boolean) => {
+      this.goodNightModeOn = enabled
+    })
 
     this.isLoading = true
 
@@ -58,7 +73,7 @@ export class HomeViewModel {
       }
       // 同步追踪的灯光场景
       if (state.lights) {
-        this.lightScene = state.lights.scene
+        this.lightSceneStore.setLightScene(state.lights.scene)
       }
     } catch (error) {
       hilog.error(0x0000, 'HomeViewModel', 'getState error: %{public}s', JSON.stringify(error))
@@ -77,23 +92,37 @@ export class HomeViewModel {
   }
 
   get disturbMode(): boolean {
-    return this.roomState?.disturbMode ?? false
+    return this.disturbModeOn
   }
 
   get cleanRoom(): boolean {
-    return this.roomState?.cleanRoom ?? false
+    return this.cleanRoomOn
   }
 
-  setAirTemp(temp: number): void {
+  async setAirTemp(temp: number): Promise<void> {
     this.airTemp = temp
     this.roomStore.setAirState({ power: this.airPower, mode: this.airMode, temp: temp, speed: this.airSpeed })
     if (this.roomState && this.roomState.air) {
       const old = this.roomState.air
       this.roomState.air = { power: old.power, mode: old.mode, speed: old.speed, temp: temp }
     }
+    // 空调开启时同步调用API
+    if (this.airPower) {
+      try {
+        const token = this.tokenStore.getToken()
+        await this.airRepository.clickAirBtn(token, { cmd: 'temp', value: temp })
+      } catch (e) {
+        hilog.error(0x0000, 'HomeViewModel', 'setAirTemp API error: %{public}s', JSON.stringify(e))
+      }
+    }
   }
 
   setAirMode(mode: number): void {
+    // 空调关闭时不允许切换模式
+    if (!this.airPower) {
+      ToastUtils.show('请先开启空调')
+      return
+    }
     if (this.airMode === mode) {
       this.airMode = -1
     } else {
@@ -106,32 +135,57 @@ export class HomeViewModel {
     }
   }
 
-  setAirPower(power: boolean): void {
-    this.airPower = power
-    this.roomStore.setAirState({ power: power, mode: this.airMode, temp: this.airTemp, speed: this.airSpeed })
+  async setAirPower(power: boolean): Promise<void> {
+    if (power) {
+      // 开启空调：恢复默认自动模式
+      this.airPower = true
+      this.airMode = 0
+    } else {
+      // 关闭空调：关闭自动模式和强劲模式
+      this.airPower = false
+      this.airMode = -1
+    }
+    this.roomStore.setAirState({ power: this.airPower, mode: this.airMode, temp: this.airTemp, speed: this.airSpeed })
     if (this.roomState && this.roomState.air) {
       const old = this.roomState.air
-      this.roomState.air = { power: power, mode: old.mode, speed: old.speed, temp: old.temp }
+      this.roomState.air = { power: this.airPower, mode: this.airMode, speed: old.speed, temp: old.temp }
+    }
+    // 调用API同步空调状态
+    try {
+      const token = this.tokenStore.getToken()
+      await this.airRepository.clickAirBtn(token, { cmd: 'power', value: power ? 1 : 0 })
+      // 开启时同步当前温度
+      if (power) {
+        await this.airRepository.clickAirBtn(token, { cmd: 'temp', value: this.airTemp })
+      }
+    } catch (e) {
+      hilog.error(0x0000, 'HomeViewModel', 'setAirPower API error: %{public}s', JSON.stringify(e))
     }
   }
 
   setLightScene(scene: number): void {
-    this.lightScene = scene
-    if (this.roomState) {
-      this.roomState.lights.scene = scene
+    // 总开关关闭时不允许切换场景
+    if (!this.lightSceneStore.mainSwitch) {
+      ToastUtils.show('请先开启灯光总开关')
+      return
     }
+    // 如果晚安模式开启中，不允许切换场景
+    if (this.goodNightModeOn) {
+      ToastUtils.show('晚安模式已开启，请先关闭')
+      return
+    }
+    // 通过共享Store设置场景
+    this.lightSceneStore.setLightScene(scene)
   }
 
   toggleDisturbMode(): void {
-    if (this.roomState) {
-      this.roomState.disturbMode = !this.roomState.disturbMode
-    }
+    this.disturbModeOn = !this.disturbModeOn
+    ToastUtils.show(this.disturbModeOn ? '请勿打扰已开启' : '请勿打扰已关闭')
   }
 
   toggleCleanRoom(): void {
-    if (this.roomState) {
-      this.roomState.cleanRoom = !this.roomState.cleanRoom
-    }
+    this.cleanRoomOn = !this.cleanRoomOn
+    ToastUtils.show(this.cleanRoomOn ? '清理房间已预约' : '清理房间已取消')
   }
 
   toggleLeftNightLight(): void {
@@ -145,8 +199,23 @@ export class HomeViewModel {
   }
 
   toggleGoodNightMode(): void {
-    this.goodNightModeOn = !this.goodNightModeOn
-    ToastUtils.show(this.goodNightModeOn ? '晚安模式已开启' : '晚安模式已关闭')
+    // 总开关关闭时不允许开启晚安模式
+    if (!this.lightSceneStore.mainSwitch && !this.goodNightModeOn) {
+      ToastUtils.show('请先开启灯光总开关')
+      return
+    }
+    if (this.goodNightModeOn) {
+      // 关闭晚安模式：恢复之前的灯光场景
+      this.goodNightModeOn = false
+      this.lightSceneStore.setLightScene(this.previousLightScene)
+      ToastUtils.show('晚安模式已关闭')
+    } else {
+      // 开启晚安模式：保存当前灯光场景并切换到入睡模式(5)
+      this.previousLightScene = this.lightSceneStore.lightScene
+      this.goodNightModeOn = true
+      this.lightSceneStore.setLightScene(5)  // 入住模式/入睡模式
+      ToastUtils.show('晚安模式已开启')
+    }
   }
 
   async enterGoodNightMode(): Promise<void> {

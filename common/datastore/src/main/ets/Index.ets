@@ -3,4 +3,5 @@
 
 export { TokenStore } from './TokenStore.ets'
 export { RoomStore } from './RoomStore.ets'
+export { LightSceneStore } from './LightSceneStore.ets'
 export type { LightState, HardwareItem, AirState, CurtainState } from './RoomStore.ets'

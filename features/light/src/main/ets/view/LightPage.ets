@@ -51,13 +51,13 @@ export struct LightPage {
 
       Scroll() {
         Column({ space: 20 }) {
-          // 标题
           Text('灯光控制')
             .fontSize(34)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F5D08A')
             .width('100%')
-            .padding({ left: 0 })
+            .textAlign(TextAlign.Center)
+            .padding({ top: 60 })
 
           // 总开关
           Row() {
@@ -75,8 +75,8 @@ export struct LightPage {
             .layoutWeight(1)
 
             Image(this.viewModel.mainSwitch ? $r('app.media.light_btn_main_switch_select') : $r('app.media.light_btn_main_switch_unselect'))
-              .width(120)
-              .height(120)
+              .width(150)
+              .height(150)
               .onClick(() => {
                 this.viewModel.toggleMainSwitch()
               })
@@ -143,15 +143,18 @@ export struct LightPage {
 
                   Text(item.name)
                     .fontSize(18)
-                    .fontColor('#FFFFFF')
+                    .fontColor(this.viewModel.mainSwitch ? '#FFFFFF' : '#888888')
                     .layoutWeight(1)
                     .margin({ left: 12 })
 
-                  Toggle({ type: ToggleType.Switch, isOn: item.isOpen })
+                  Toggle({ type: ToggleType.Switch, isOn: this.viewModel.mainSwitch ? item.isOpen : false })
                     .selectedColor('#FACC15')
+                    .enabled(this.viewModel.mainSwitch)
                     .onChange((isOn: boolean) => {
-                      item.isOpen = isOn
-                      this.viewModel.toggleHardware(item.id, isOn)
+                      if (this.viewModel.mainSwitch) {
+                        item.isOpen = isOn
+                        this.viewModel.toggleHardware(item.id, isOn)
+                      }
                     })
                 }
                 .width('100%')
@@ -183,17 +186,17 @@ export struct LightPage {
   @Builder
   SceneCard(selectIcon: string, unselectIcon: string, title: string, sceneId: number) {
     Column() {
-      Image(this.viewModel.mainSwitch && this.viewModel.currentScene === sceneId ? $r(`app.media.${selectIcon}`) : $r(`app.media.${unselectIcon}`))
-        .width(120)
-        .height(120)
+      Image(this.viewModel.mainSwitch && this.viewModel.lightSceneStore.lightScene === sceneId ? $r(`app.media.${selectIcon}`) : $r(`app.media.${unselectIcon}`))
+        .width(140)
+        .height(140)
 
       Text(title)
         .fontColor('#F5D08A')
         .fontSize(16)
         .margin({ top: 8 })
     }
-    .width(100)
-    .height(160)
+    .width(120)
+    .height(180)
     .justifyContent(FlexAlign.Center)
     .backgroundColor('#10264A')
     .borderRadius(24)
