@@ -10,6 +10,7 @@
     "common_datastore": "file:../../common/datastore",
     "common_mock": "file:../../common/mock",
     "common_utils": "file:../../common/utils",
-    "common_uicomponents": "file:../../common/uicomponents"
+    "common_uicomponents": "file:../../common/uicomponents",
+    "common_weather": "file:../../common/weather"
   }
 }

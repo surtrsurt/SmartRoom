@@ -1,9 +1,0 @@
-{
-  "name": "common_uicomponents",
-  "version": "1.0.0",
-  "description": "uicomponents common module",
-  "main": "./src/main/ets/Index.ets",
-  "author": "",
-  "license": "",
-  "dependencies": {}
-}

@@ -1,0 +1,11 @@
+{
+  "module": {
+    "name": "common_weather",
+    "type": "har",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ],
+    "description": "$string:module_desc"
+  }
+}

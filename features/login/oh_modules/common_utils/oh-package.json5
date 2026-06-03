@@ -1,9 +1,0 @@
-{
-  "name": "common_utils",
-  "version": "1.0.0",
-  "description": "utils common module",
-  "main": "./src/main/ets/Index.ets",
-  "author": "",
-  "license": "",
-  "dependencies": {}
-}

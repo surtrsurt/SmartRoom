@@ -1,9 +1,0 @@
-{
-  "name": "common_datastore",
-  "version": "1.0.0",
-  "description": "datastore common module",
-  "main": "./src/main/ets/Index.ets",
-  "author": "",
-  "license": "",
-  "dependencies": {}
-}

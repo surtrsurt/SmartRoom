@@ -1,6 +1,20 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\林绮\\.ohos\\config\\default_SmartRoom_GMvgidxBlvGkKhT-9a_HzqFLbd-10Yt1FFKjBBZKWOk=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001A1C512844B6A9A218CDE4312822A6E6708E0E715470E6A0F551D96C226A50B8929172E8185F95",
+          "profile": "C:\\Users\\林绮\\.ohos\\config\\default_SmartRoom_GMvgidxBlvGkKhT-9a_HzqFLbd-10Yt1FFKjBBZKWOk=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\林绮\\.ohos\\config\\default_SmartRoom_GMvgidxBlvGkKhT-9a_HzqFLbd-10Yt1FFKjBBZKWOk=.p12",
+          "storePassword": "0000001A08B68A68546AF75C28BC4BD7D913FD9592CEBEC16F726FFF3A697B4D27DDDA2A5A3070A8670D"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
@@ -22,6 +36,17 @@
       },
       {
         "name": "release"
+      }
+    ],
+    "capabilities": [
+      {
+        "bundleName": "com.example.smartroom",
+        "config": [
+          {
+            "name": "Map Kit",
+            "capability": "com.huawei.service.mapkit"
+          }
+        ]
       }
     ]
   },
@@ -161,6 +186,18 @@
     {
       "name": "features_service",
       "srcPath": "./features/service",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "common_weather",
+      "srcPath": "./common/weather",
       "targets": [
         {
           "name": "default",

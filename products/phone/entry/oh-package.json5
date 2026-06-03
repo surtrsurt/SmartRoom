@@ -16,6 +16,7 @@
     "features_light": "file:../../../features/light",
     "features_air": "file:../../../features/air",
     "features_curtain": "file:../../../features/curtain",
-    "features_service": "file:../../../features/service"
+    "features_service": "file:../../../features/service",
+    "common_weather": "file:../../../common/weather"
   }
 }
