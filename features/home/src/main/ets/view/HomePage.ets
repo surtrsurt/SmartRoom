@@ -22,13 +22,20 @@ export struct HomePage {
 
       Column() {
         // 标题
-        Text('首页控制')
-          .fontSize(34)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#F4D39A')
-          .width('100%')
-          .textAlign(TextAlign.Center)
-          .padding({ top: 60, bottom: 20 })
+        Column() {
+          Text('首页控制')
+            .fontSize(38)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#F5D8A3')
+
+          Divider()
+            .width(80)
+            .height(2)
+            .color('#D6B16A')
+            .margin({ top: 8 })
+        }
+        .width('100%')
+        .padding({ top: 60, bottom: 30 })
 
         Scroll() {
           Column({ space: 22 }) {
@@ -175,10 +182,10 @@ export struct HomePage {
         .fontSize(20)
         .fontColor('#F4D39A')
 
-      // 模式按钮
-      Row() {
-        this.ModeButton('home_auto_mode', '自动模式', 0)
-        this.ModeButton('home_powerful_mode', '强劲模式', 1)
+      // 模式按钮（自动模式/强劲模式）
+      Row({ space: 12 }) {
+        this.AutoModeButton()
+        this.PowerfulModeButton()
       }
       .margin({ top: 24 })
     }
@@ -189,40 +196,74 @@ export struct HomePage {
   }
 
   @Builder
-  private ModeButton(iconName: string, title: string, mode: number) {
+  private AutoModeButton() {
     Column() {
-      Image(this.viewModel.airMode === mode ?
-        $r(`app.media.${iconName}_select`) : $r(`app.media.${iconName}_unselect`))
+      Image(this.viewModel.autoModeOn ?
+        $r('app.media.home_auto_mode_select') : $r('app.media.home_auto_mode_unselect'))
         .width(50)
         .height(50)
 
-      Text(title)
-        .fontSize(24)
+      Text('自动模式')
+        .fontSize(20)
         .fontColor('#F4D39A')
         .margin({ top: 8 })
     }
-    .width('48%')
-    .height(90)
+    .width('47%')
+    .height(80)
     .justifyContent(FlexAlign.Center)
-    .backgroundColor(this.viewModel.airMode === mode ?
+    .backgroundColor(this.viewModel.autoModeOn ?
       'rgba(255,215,120,0.12)' : 'rgba(0,0,0,0)')
     .border({
       width: 1,
-      color: this.viewModel.airMode === mode ? '#DDB97A' : 'rgba(221,185,122,0.5)'
+      color: this.viewModel.autoModeOn ? '#DDB97A' : 'rgba(221,185,122,0.5)'
     })
     .borderRadius(16)
     .onClick(() => {
-      this.viewModel.setAirMode(mode)
+      this.viewModel.toggleAutoMode()
+    })
+  }
+
+  @Builder
+  private PowerfulModeButton() {
+    Column() {
+      Image(this.viewModel.powerfulModeOn ?
+        $r('app.media.home_powerful_mode_select') : $r('app.media.home_powerful_mode_unselect'))
+        .width(50)
+        .height(50)
+
+      Text('强劲模式')
+        .fontSize(20)
+        .fontColor('#F4D39A')
+        .margin({ top: 8 })
+    }
+    .width('47%')
+    .height(80)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(this.viewModel.powerfulModeOn ?
+      'rgba(255,215,120,0.12)' : 'rgba(0,0,0,0)')
+    .border({
+      width: 1,
+      color: this.viewModel.powerfulModeOn ? '#DDB97A' : 'rgba(221,185,122,0.5)'
+    })
+    .borderRadius(16)
+    .onClick(() => {
+      this.viewModel.togglePowerfulMode()
     })
   }
 
   // 服务卡片
   @Builder
   private ServiceCard() {
-    Row({ space: 16 }) {
-      this.ShortcutCardUndiburb()
-      this.ShortcutCardClear()
+    Column() {
+      Row({ space: 16 }) {
+        this.ShortcutCardUndiburb()
+        this.ShortcutCardClear()
+      }
     }
+    .width('100%')
+    .padding(24)
+    .backgroundColor('rgba(10,28,65,0.75)')
+    .borderRadius(24)
   }
 
   @Builder
@@ -283,16 +324,16 @@ export struct HomePage {
           Image(this.viewModel.leftNightLightOn ?
             $r('app.media.home_icon_night_left_select') :
             $r('app.media.home_icon_night_left_unselect'))
-            .width(100)
-            .height(100)
+            .width(80)
+            .height(80)
 
           Text('左夜灯')
             .fontSize(18)
             .fontColor('#F4D39A')
-            .margin({ top: 8 })
+            .margin({ top: 4 })
         }
         .layoutWeight(1)
-        .height(120)
+        .height(110)
         .justifyContent(FlexAlign.Center)
         .backgroundColor(this.viewModel.leftNightLightOn ?
           'rgba(255,215,120,0.12)' : 'rgba(0,0,0,0.2)')
@@ -305,7 +346,7 @@ export struct HomePage {
 
         Divider()
           .vertical(true)
-          .height(80)
+          .height(60)
           .color('rgba(221,185,122,0.3)')
 
         // 右夜灯
@@ -313,16 +354,16 @@ export struct HomePage {
           Image(this.viewModel.rightNightLightOn ?
             $r('app.media.home_icon_night_right_select') :
             $r('app.media.home_icon_night_right_unselect'))
-            .width(100)
-            .height(100)
+            .width(80)
+            .height(80)
 
           Text('右夜灯')
             .fontSize(18)
             .fontColor('#F4D39A')
-            .margin({ top: 8 })
+            .margin({ top: 4 })
         }
         .layoutWeight(1)
-        .height(120)
+        .height(110)
         .justifyContent(FlexAlign.Center)
         .backgroundColor(this.viewModel.rightNightLightOn ?
           'rgba(255,215,120,0.12)' : 'rgba(0,0,0,0.2)')
@@ -333,7 +374,7 @@ export struct HomePage {
         })
         .onClick(() => this.viewModel.toggleRightNightLight())
       }
-      .height(120)
+      .height(110)
     }
     .width('100%')
     .padding(24)

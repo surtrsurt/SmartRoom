@@ -1,8 +1,10 @@
 // 灯光页面
 // 查拉图斯特拉如是说
 
+import { hilog } from '@kit.PerformanceAnalysisKit'
 import { LightViewModel } from '../viewmodel/LightViewModel.ets'
-import { LightScene } from '../model/LightModel.ets'
+import { LightSceneStore } from 'common_datastore'
+import { LightScene, LightHardwareInfo } from '../model/LightModel.ets'
 
 interface LightSceneItem {
   id: number
@@ -11,28 +13,10 @@ interface LightSceneItem {
   unselectIcon: string
 }
 
-interface HardwareItem {
-  id: number
-  name: string
-  icon: string
-  isOpen: boolean
-}
-
 @Entry
 @ComponentV2
 export struct LightPage {
   @Local viewModel: LightViewModel = new LightViewModel()
-  @Local hardwareItems: HardwareItem[] = [
-    { id: 1, name: '洗漱间', icon: 'light_icon_washroom', isOpen: true },
-    { id: 2, name: '衣柜灯', icon: 'light_icon_wardrobe', isOpen: true },
-    { id: 3, name: '落地灯', icon: 'light_icon_bar_lamp', isOpen: true },
-    { id: 4, name: '吧台灯', icon: 'light_icon_desk', isOpen: true },
-    { id: 5, name: '书桌灯', icon: 'light_icon_desk', isOpen: true },
-    { id: 6, name: '左阅读灯', icon: 'light_icon_left_read', isOpen: true },
-    { id: 7, name: '右阅读灯', icon: 'light_icon_right_read', isOpen: true },
-    { id: 8, name: '风扇', icon: 'light_icon_exhaust_fan', isOpen: true },
-    { id: 9, name: '廊灯', icon: 'light_icon_corrid_lights', isOpen: true }
-  ]
 
   private scenes: LightSceneItem[] = [
     { id: LightScene.BRIGHT, name: '明亮', selectIcon: 'light_icon_bright_mode_select', unselectIcon: 'light_icon_bright_mode_unselect' },
@@ -41,6 +25,24 @@ export struct LightPage {
     { id: LightScene.WARM, name: '温馨', selectIcon: 'light_icon_warm_mode_select', unselectIcon: 'light_icon_warm_mode_unselect' },
     { id: LightScene.SLEEP, name: '入睡', selectIcon: 'light_icon_sleep_mode_select', unselectIcon: 'light_icon_sleep_mode_unselect' }
   ]
+
+  // 场景切换监听器
+  private onSceneChange = (scene: number): void => {
+    // 当首页切换场景时，更新独立控制的开关状态
+    this.viewModel.applyHardwareStates(scene)
+  }
+
+  aboutToAppear(): void {
+    // 注册场景切换监听器
+    LightSceneStore.getInstance().registerSceneChangeListener(this.onSceneChange)
+    // 初始化时同步当前场景状态到独立控制开关
+    this.viewModel.applyHardwareStates(LightSceneStore.getInstance().lightScene)
+  }
+
+  aboutToDisappear(): void {
+    // 注销场景切换监听器
+    LightSceneStore.getInstance().unregisterSceneChangeListener(this.onSceneChange)
+  }
 
   build() {
     Stack() {
@@ -51,13 +53,20 @@ export struct LightPage {
 
       Scroll() {
         Column({ space: 20 }) {
-          Text('灯光控制')
-            .fontSize(34)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#F5D08A')
-            .width('100%')
-            .textAlign(TextAlign.Center)
-            .padding({ top: 60 })
+          Column() {
+            Text('灯光控制')
+              .fontSize(38)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#F5D8A3')
+
+            Divider()
+              .width(80)
+              .height(2)
+              .color('#D6B16A')
+              .margin({ top: 8 })
+          }
+          .width('100%')
+          .padding({ top: 60, bottom: 30 })
 
           // 总开关
           Row() {
@@ -91,13 +100,13 @@ export struct LightPage {
           Column() {
             Row() {
               Image($r('app.media.light_scene_mode'))
-                .width(32)
-                .height(32)
+                .width(48)
+                .height(48)
               Text('场景模式')
                 .fontSize(24)
                 .fontColor('#F5D08A')
                 .fontWeight(FontWeight.Bold)
-                .margin({ left: 8 })
+                .margin({ left: 12 })
             }
             .width('100%')
             .margin({ bottom: 20 })
@@ -135,7 +144,7 @@ export struct LightPage {
             .margin({ bottom: 20 })
 
             Column() {
-              ForEach(this.hardwareItems, (item: HardwareItem) => {
+              ForEach(this.viewModel.hardwareList, (item: LightHardwareInfo) => {
                 Row() {
                   Image($r(`app.media.${item.icon}`))
                     .width(80)
@@ -147,13 +156,21 @@ export struct LightPage {
                     .layoutWeight(1)
                     .margin({ left: 12 })
 
-                  Toggle({ type: ToggleType.Switch, isOn: this.viewModel.mainSwitch ? item.isOpen : false })
-                    .selectedColor('#FACC15')
-                    .enabled(this.viewModel.mainSwitch)
-                    .onChange((isOn: boolean) => {
+                  Image(this.viewModel.mainSwitch && item.on ?
+                    $r('app.media.light_toggle_on') : $r('app.media.light_toggle_off'))
+                    .width(70)
+                    .height(70)
+                    .onClick(() => {
                       if (this.viewModel.mainSwitch) {
-                        item.isOpen = isOn
-                        this.viewModel.toggleHardware(item.id, isOn)
+                        this.viewModel.toggleHardware(item.id, !item.on)
+                      }
+                    })
+                    .stateStyles({
+                      normal: {
+                        .scale({ x: 1, y: 1 })
+                      },
+                      pressed: {
+                        .scale({ x: 0.5, y: 0.5 })
                       }
                     })
                 }

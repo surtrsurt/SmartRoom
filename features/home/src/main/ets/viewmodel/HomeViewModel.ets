@@ -21,9 +21,10 @@ export class HomeViewModel {
   @Trace isGoodNightExecuting: boolean = false
   // 直接追踪空调状态，解决UI更新问题
   @Trace airPower: boolean = false
-  @Trace airMode: number = 0
+  @Trace autoModeOn: boolean = false   // 自动模式（送风）
+  @Trace powerfulModeOn: boolean = false  // 强劲模式（制冷）
   @Trace airTemp: number = 24
-  @Trace airSpeed: number = 0
+  @Trace airSpeed: number = 0  // 默认自动
   @Trace goodNightModeOn: boolean = false
   // 服务状态（选中效果需要@Trace）
   @Trace disturbModeOn: boolean = false
@@ -68,8 +69,11 @@ export class HomeViewModel {
       if (state.air) {
         this.airPower = savedAir?.power ?? state.air.power
         this.airTemp = savedAir?.temp ?? state.air.temp
-        this.airMode = savedAir?.mode ?? state.air.mode
         this.airSpeed = savedAir?.speed ?? state.air.speed
+        // 根据保存的状态恢复自动/强劲模式
+        const savedMode = savedAir?.mode ?? state.air.mode
+        this.autoModeOn = savedMode === 0  // 自动模式=送风
+        this.powerfulModeOn = savedMode === 1  // 强劲模式=制冷
       }
       // 同步追踪的灯光场景
       if (state.lights) {
@@ -99,13 +103,26 @@ export class HomeViewModel {
     return this.cleanRoomOn
   }
 
-  async setAirTemp(temp: number): Promise<void> {
-    this.airTemp = temp
-    this.roomStore.setAirState({ power: this.airPower, mode: this.airMode, temp: temp, speed: this.airSpeed })
+  // 计算当前模式值（用于持久化和API）
+  private getCurrentMode(): number {
+    if (this.autoModeOn) return 0   // 自动模式=送风
+    if (this.powerfulModeOn) return 1  // 强劲模式=制冷
+    return -1  // 无模式
+  }
+
+  // 同步空调状态到持久化和roomState
+  private syncAirState(): void {
+    const mode = this.getCurrentMode()
+    this.roomStore.setAirState({ power: this.airPower, mode: mode, temp: this.airTemp, speed: this.airSpeed })
     if (this.roomState && this.roomState.air) {
       const old = this.roomState.air
-      this.roomState.air = { power: old.power, mode: old.mode, speed: old.speed, temp: temp }
+      this.roomState.air = { power: this.airPower, mode: mode, speed: old.speed, temp: old.temp }
     }
+  }
+
+  async setAirTemp(temp: number): Promise<void> {
+    this.airTemp = temp
+    this.syncAirState()
     // 空调开启时同步调用API
     if (this.airPower) {
       try {
@@ -117,39 +134,55 @@ export class HomeViewModel {
     }
   }
 
-  setAirMode(mode: number): void {
-    // 空调关闭时不允许切换模式
+  // 切换自动模式（送风）
+  toggleAutoMode(): void {
     if (!this.airPower) {
       ToastUtils.show('请先开启空调')
       return
     }
-    if (this.airMode === mode) {
-      this.airMode = -1
+    if (this.autoModeOn) {
+      // 关闭自动模式
+      this.autoModeOn = false
     } else {
-      this.airMode = mode
+      // 开启自动模式，同时关闭强劲模式
+      this.autoModeOn = true
+      this.powerfulModeOn = false
+      // 调用API：送风模式
+      this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'mode', value: 3 })
     }
-    this.roomStore.setAirState({ power: this.airPower, mode: this.airMode, temp: this.airTemp, speed: this.airSpeed })
-    if (this.roomState && this.roomState.air) {
-      const old = this.roomState.air
-      this.roomState.air = { power: old.power, mode: this.airMode, speed: old.speed, temp: old.temp }
+    this.syncAirState()
+  }
+
+  // 切换强劲模式（制冷+21度）
+  togglePowerfulMode(): void {
+    if (!this.airPower) {
+      ToastUtils.show('请先开启空调')
+      return
     }
+    if (this.powerfulModeOn) {
+      // 关闭强劲模式
+      this.powerfulModeOn = false
+    } else {
+      // 开启强劲模式，同时关闭自动模式
+      this.powerfulModeOn = true
+      this.autoModeOn = false
+      // 调用API：制冷模式 + 21度
+      this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'mode', value: 1 })
+      this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'temp', value: 21 })
+      this.airTemp = 21
+    }
+    this.syncAirState()
   }
 
   async setAirPower(power: boolean): Promise<void> {
-    if (power) {
-      // 开启空调：恢复默认自动模式
-      this.airPower = true
-      this.airMode = 0
-    } else {
-      // 关闭空调：关闭自动模式和强劲模式
-      this.airPower = false
-      this.airMode = -1
+    this.airPower = power
+    if (!power) {
+      // 关闭空调时，同时关闭两个模式
+      this.autoModeOn = false
+      this.powerfulModeOn = false
+      ToastUtils.show('空调已关闭')
     }
-    this.roomStore.setAirState({ power: this.airPower, mode: this.airMode, temp: this.airTemp, speed: this.airSpeed })
-    if (this.roomState && this.roomState.air) {
-      const old = this.roomState.air
-      this.roomState.air = { power: this.airPower, mode: this.airMode, speed: old.speed, temp: old.temp }
-    }
+    this.syncAirState()
     // 调用API同步空调状态
     try {
       const token = this.tokenStore.getToken()
@@ -169,10 +202,9 @@ export class HomeViewModel {
       ToastUtils.show('请先开启灯光总开关')
       return
     }
-    // 如果晚安模式开启中，不允许切换场景
+    // 如果晚安模式开启中，先关闭晚安模式再切换
     if (this.goodNightModeOn) {
-      ToastUtils.show('晚安模式已开启，请先关闭')
-      return
+      this.goodNightModeOn = false
     }
     // 通过共享Store设置场景
     this.lightSceneStore.setLightScene(scene)

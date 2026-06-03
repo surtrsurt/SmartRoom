@@ -55,7 +55,12 @@
       "Bash(\"E:/DevEcoStudio/DS/DevEco Studio/tools/node/node.exe\" \"E:/DevEcoStudio/DS/DevEco Studio/tools/hvigor/bin/hvigorw.js\" --mode module -p module=entry@default -p product=default -p requiredDeviceType=phone assembleHap --analyze=normal --parallel --incremental --daemon)",
       "Bash(hvigor --build-mode debug assembleApp)",
       "Bash(npx hvigor:*)",
-      "Bash(xargs -I{} basename {})"
+      "Bash(xargs -I{} basename {})",
+      "Bash(\"E:/DevEcoStudio/DS/DevEco Studio/tools/node/node.exe\" \"E:/DevEcoStudio/DS/DevEco Studio/tools/hvigor/bin/hvigorw.js\" --mode module -p module=entry@default -p product=default -p requiredDeviceType=phone assembleHap --analyze=normal --parallel 2>&1)",
+      "Bash(rm -rf products/phone/entry/build features/*/build common/*/build .hvigor)",
+      "Bash('E:/DevEcoStudio/DS/DevEco Studio/tools/node/node.exe' 'E:/DevEcoStudio/DS/DevEco Studio/tools/hvigor/bin/hvigorw.js' --mode module -p module=entry@default -p product=default -p requiredDeviceType=phone assembleHap --no-daemon)",
+      "Bash(rm -rf features/service/build)",
+      "Bash(\"E:/DevEcoStudio/DS/DevEco Studio/tools/node/node.exe\" \"E:/DevEcoStudio/DS/DevEco Studio/tools/hvigor/bin/hvigorw.js\" --mode module -p module=features_service@default assembleHar --no-daemon)"
     ]
   }
 }

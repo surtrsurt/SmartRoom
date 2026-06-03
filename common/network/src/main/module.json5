@@ -6,7 +6,6 @@
       "phone",
       "tablet"
     ],
-    "description": "$string:module_desc",
-    "mainElement": "EntryAbility"
+    "description": "$string:module_desc"
   }
 }
