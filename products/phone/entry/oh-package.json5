@@ -1,0 +1,21 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "SmartRoom Entry Module",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "common_network": "file:../../../common/network",
+    "common_datastore": "file:../../../common/datastore",
+    "common_mock": "file:../../../common/mock",
+    "common_uicomponents": "file:../../../common/uicomponents",
+    "common_utils": "file:../../../common/utils",
+    "features_login": "file:../../../features/login",
+    "features_home": "file:../../../features/home",
+    "features_light": "file:../../../features/light",
+    "features_air": "file:../../../features/air",
+    "features_curtain": "file:../../../features/curtain",
+    "features_service": "file:../../../features/service"
+  }
+}

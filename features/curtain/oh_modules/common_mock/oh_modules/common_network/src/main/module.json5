@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "common_network",
+    "type": "har",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ],
+    "description": "$string:module_desc",
+    "mainElement": "EntryAbility"
+  }
+}

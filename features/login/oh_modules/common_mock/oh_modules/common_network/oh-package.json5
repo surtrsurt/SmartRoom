@@ -1,0 +1,9 @@
+{
+  "name": "common_network",
+  "version": "1.0.0",
+  "description": "network common module",
+  "main": "./src/main/ets/Index.ets",
+  "author": "",
+  "license": "",
+  "dependencies": {}
+}

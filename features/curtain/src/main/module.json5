@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "features_curtain",
+    "type": "har",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ],
+    "description": "$string:module_desc",
+    "mainElement": "EntryAbility"
+  }
+}

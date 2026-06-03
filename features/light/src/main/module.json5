@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "features_light",
+    "type": "har",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ],
+    "description": "$string:module_desc",
+    "mainElement": "EntryAbility"
+  }
+}

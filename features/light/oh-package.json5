@@ -1,0 +1,15 @@
+{
+  "name": "features_light",
+  "version": "1.0.0",
+  "description": "light feature module",
+  "main": "./src/main/ets/Index.ets",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "common_network": "file:../../common/network",
+    "common_datastore": "file:../../common/datastore",
+    "common_mock": "file:../../common/mock",
+    "common_utils": "file:../../common/utils",
+    "common_uicomponents": "file:../../common/uicomponents"
+  }
+}
