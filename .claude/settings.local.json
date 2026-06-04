@@ -67,7 +67,8 @@
       "Bash(ls /c/HarmonyStudy/SmartRoom/features/*/src/main/ets/)",
       "Bash(cmd //c \"hvigor --build-mode debug assembleApp\")",
       "Bash(cmd //c \"hvigor --build-mode debug assembleApp 2>&1\")",
-      "Bash(echo $PATH)"
+      "Bash(echo $PATH)",
+      "Bash(find C:/HarmonyStudy/SmartRoom/features -name \"*.ets\" -path \"*/view/*\" -exec wc -l {})"
     ]
   }
 }
