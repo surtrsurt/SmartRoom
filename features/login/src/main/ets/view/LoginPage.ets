@@ -1,12 +1,13 @@
 // 登录页面组件
 // 查拉图斯特拉如是说
 
-import router from '@ohos.router'
+import type { NavPathStackInterface } from 'common_datastore'
 import { LoginViewModel } from '../viewmodel/LoginViewModel.ets'
 
-@Component
+@ComponentV2
 export struct LoginPage {
-  @State viewModel: LoginViewModel = new LoginViewModel()
+  @Local viewModel: LoginViewModel = new LoginViewModel()
+  @Param pathStack: NavPathStackInterface | undefined = undefined
 
   build() {
     Stack() {
@@ -132,8 +133,9 @@ export struct LoginPage {
 
   async handleLogin(): Promise<void> {
     const success = await this.viewModel.login()
-    if (success) {
-      router.replaceUrl({ url: 'pages/MainPage' })
+    if (success && this.pathStack) {
+      // 登录成功，清空栈返回主页（显示Tab页面）
+      this.pathStack.clear()
     }
   }
 }

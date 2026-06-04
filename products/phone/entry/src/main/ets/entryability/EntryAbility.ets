@@ -3,8 +3,6 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { TokenStore } from 'common_datastore';
 import { RoomStore } from 'common_datastore';
-import { RouteConstants } from '../startup/RouteConstants.ets';
-import router from '@ohos.router';
 
 const DOMAIN = 0x0000;
 
@@ -39,14 +37,8 @@ export default class EntryAbility extends UIAbility {
     TokenStore.getInstance().init(this.context)
     RoomStore.getInstance().init(this.context)
 
-    // 检查登录状态并跳转
-    const tokenStore = TokenStore.getInstance()
-    const token = tokenStore.getToken()
-    const isLoggedIn = token && !tokenStore.isTokenExpired()
-
-    const startPage = isLoggedIn ? RouteConstants.MAIN : RouteConstants.LOGIN
-
-    windowStage.loadContent(startPage, (err) => {
+    // 始终加载MainPage，由MainPage内部判断登录状态
+    windowStage.loadContent('pages/MainPage', (err) => {
       if (err) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}d', err);
         return;

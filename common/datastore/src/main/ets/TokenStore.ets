@@ -4,6 +4,12 @@
 import { preferences } from '@kit.ArkData'
 import { BusinessError } from '@kit.BasicServicesKit'
 
+// NavPathStack接口定义（SDK兼容，避免直接导入NavPathStack）
+export interface NavPathStackInterface {
+  clear(): void
+  pushPathByName(name: string, param: Object | null): void
+}
+
 const TOKEN_PREFERENCES_NAME = 'token_prefs'
 const KEY_TOKEN = 'token'
 const KEY_ROOM_NO = 'roomNo'

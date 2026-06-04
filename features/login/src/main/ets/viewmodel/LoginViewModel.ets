@@ -8,11 +8,12 @@ import { ToastUtils } from 'common_uicomponents'
 import { LoginRepository } from '../repository/LoginRepository.ets'
 import type { LoginRequest } from 'common_mock'
 
+@ObservedV2
 export class LoginViewModel {
-  roomNo: string = ''
-  userName: string = ''
-  rememberMe: boolean = true
-  isLoading: boolean = false
+  @Trace roomNo: string = ''
+  @Trace userName: string = ''
+  @Trace rememberMe: boolean = true
+  @Trace isLoading: boolean = false
 
   private repository: LoginRepository = new LoginRepository()
   private tokenStore: TokenStore = TokenStore.getInstance()

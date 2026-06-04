@@ -4,7 +4,6 @@
 import { CurtainViewModel } from '../viewmodel/CurtainViewModel.ets'
 
 @ComponentV2
-@Entry
 export struct CurtainPage {
   @Local viewModel: CurtainViewModel = new CurtainViewModel()
 

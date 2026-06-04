@@ -13,7 +13,6 @@ interface LightSceneItem {
   unselectIcon: string
 }
 
-@Entry
 @ComponentV2
 export struct LightPage {
   @Local viewModel: LightViewModel = new LightViewModel()

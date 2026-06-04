@@ -1,13 +1,11 @@
 // 服务ViewModel
 // 查拉图斯特拉如是说
 
-import { TokenStore } from 'common_datastore'
-import { ServiceStore } from 'common_datastore'
 import { ToastUtils } from 'common_uicomponents'
 import { ServiceRepository } from '../repository/ServiceRepository.ets'
 import { WeatherViewModel } from 'common_weather'
 import type { ServiceControlRequest } from 'common_mock'
-import router from '@ohos.router'
+import { TokenStore, ServiceStore, type NavPathStackInterface } from 'common_datastore'
 
 @ObservedV2
 export class ServiceViewModel {
@@ -22,6 +20,8 @@ export class ServiceViewModel {
   private repository: ServiceRepository = new ServiceRepository()
   private tokenStore: TokenStore = TokenStore.getInstance()
   private serviceStore: ServiceStore = ServiceStore.getInstance()
+  // ViewModel不拥有pathStack，由页面传入
+  pathStack: NavPathStackInterface | undefined = undefined
 
   aboutToAppear(): void {
     // 注册服务状态监听
@@ -70,7 +70,10 @@ export class ServiceViewModel {
       this.tokenStore.clearToken()
 
       ToastUtils.show('已退出登录')
-      router.replaceUrl({ url: 'pages/LoginPage' })
+      if (this.pathStack) {
+        this.pathStack.clear()
+        this.pathStack.pushPathByName('login', null)
+      }
     } catch (error) {
       ToastUtils.show('退出失败')
     } finally {

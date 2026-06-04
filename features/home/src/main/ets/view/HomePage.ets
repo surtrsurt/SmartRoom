@@ -4,7 +4,6 @@
 import { HomeViewModel } from '../viewmodel/HomeViewModel.ets'
 
 @ComponentV2
-@Entry
 export struct HomePage {
   @Local viewModel: HomeViewModel = new HomeViewModel()
 

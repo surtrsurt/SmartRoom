@@ -1,7 +1,6 @@
 // 服务页面
 // 查拉图斯特拉如是说
 
-import { router } from '@kit.ArkUI'
 import { promptAction } from '@kit.ArkUI'
 import { ToastUtils } from 'common_uicomponents'
 import { TokenStore } from 'common_datastore'
@@ -9,11 +8,12 @@ import { WeatherService, getCitiesByDistance } from 'common_weather'
 import { ServiceViewModel } from '../viewmodel/ServiceViewModel.ets'
 import { WEATHER_TIPS, getWeatherTip } from '../model/ServiceModel.ets'
 import type { WeatherData, CityInfo, WeatherCondition, WeatherTip, RainDrop } from 'common_weather'
+import type { NavPathStackInterface } from 'common_datastore'
 
 @ComponentV2
-@Entry
 export struct ServicePage {
   @Local viewModel: ServiceViewModel = new ServiceViewModel()
+  @Param pathStack: NavPathStackInterface | undefined = undefined
   @Local isSosCalling: boolean = false
   @Local cloudOffset: number = 0
   @Local rainDrops: RainDrop[] = []
@@ -90,6 +90,7 @@ export struct ServicePage {
 
   aboutToAppear(): void {
     this.viewModel.aboutToAppear()
+    this.viewModel.pathStack = this.pathStack
     this.startWeatherAnimation()
     this.loadWeather()
   }
@@ -240,8 +241,11 @@ export struct ServicePage {
 
       ToastUtils.show('已退出登录')
 
-      // 3. 导航到登录页
-      router.replaceUrl({ url: 'pages/LoginPage' })
+      // 3. 使用NavPathStack导航到登录页
+      if (this.pathStack) {
+        this.pathStack.clear()
+        this.pathStack.pushPathByName('login', null)
+      }
     }
   }
 
