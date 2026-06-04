@@ -40,8 +40,8 @@ export interface DialogButton {
 
 // 天气提示语映射
 export const WEATHER_TIPS: WeatherTip[] = [
-  { condition: 'sunny', tip: '阳光明媚，适宜户外活动', color: '#FFD700' },
-  { condition: 'cloudy', tip: '多云天气，记得防晒', color: '#B0C4DE' },
+  { condition: 'sunny', tip: '记得防晒，户外活动请注意遮阳', color: '#FFD700' },
+  { condition: 'cloudy', tip: '减少户外活动时间，温差可能较大可适当增减衣物', color: '#B0C4DE' },
   { condition: 'rainy', tip: '雨天路滑，请注意出行安全', color: '#6EA8FF' },
   { condition: 'snowy', tip: '雪天路滑，请小心慢行', color: '#E0FFFF' },
   { condition: 'foggy', tip: '雾天能见度低，请注意安全', color: '#D3D3D3' }

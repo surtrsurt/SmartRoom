@@ -496,12 +496,12 @@ export struct ServicePage {
         .backgroundColor(this.getBackgroundColor())
         .borderRadius(24)
 
-      // 太阳动画（晴天显示）
+      // 太阳图标（晴天显示）
       if (this.currentWeather && this.currentWeather.condition === 'sunny') {
-        Column() {
-          Circle().width(50).height(50).fill('#FFD700').opacity(0.9)
-        }
-        .position({ x: '70%', y: 20 })
+        Image($r('app.media.service_sun'))
+          .width(100)
+          .height(100)
+          .position({ x: '68%', y: 15 })
       }
 
       // 云朵动画（仅多云显示）
@@ -591,10 +591,6 @@ export struct ServicePage {
               Text('湿度 ' + this.currentWeather.humidity + '%')
                 .fontSize(14)
                 .fontColor('rgba(255,255,255,0.85)')
-              Text('湿度 ' + this.currentWeather.humidity + '%')
-                .fontSize(14)
-                .fontColor('rgba(255,255,255,0.85)')
-                .margin({ top: 6 })
               Text(this.currentWeather.windDirection + ' ' + this.currentWeather.windPower)
                 .fontSize(14)
                 .fontColor('rgba(255,255,255,0.85)')
