@@ -1,21 +1,9 @@
 import { http } from '@kit.NetworkKit'
 import type { WeatherData, CityInfo, WeatherCondition } from '../model/WeatherModel'
-import { PRESET_CITIES, DONGGUAN_LNG, DONGGUAN_LAT } from '../util/CityData'
+import { getCitiesByDistance } from '../util/CitySearchUtil'
 
 const BASE_URL = 'https://restapi.amap.com/v3'
 const KEY = 'f4a1aae3261c2d264389db2cda9e5d1f'
-
-// 计算两点之间的距离（km）
-function calculateDistance(lng1: number, lat1: number, lng2: number, lat2: number): number {
-  const R = 6371 // 地球半径，单位km
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
-}
 
 export class WeatherService {
   private static instance: WeatherService
@@ -70,29 +58,7 @@ export class WeatherService {
 
   // 获取城市列表（按距离东莞排序）
   getCitiesByDistance(): CityInfo[] {
-    // 计算每个城市到东莞的距离并排序
-    const sortedCities: CityDistanceInfo[] = PRESET_CITIES.map(city => {
-      const dist = calculateDistance(city.lng, city.lat, DONGGUAN_LNG, DONGGUAN_LAT)
-      return {
-        cityName: city.name,
-        adcode: city.adcode,
-        distance: Math.round(dist)
-      } as CityDistanceInfo
-    })
-
-    // 按距离排序
-    sortedCities.sort((a, b) => a.distance - b.distance)
-
-    // 返回排序后的城市信息
-    const result: CityInfo[] = sortedCities.map(item => {
-      const cityInfo: CityInfo = {
-        name: item.cityName,
-        adcode: item.adcode,
-        distance: item.distance
-      }
-      return cityInfo
-    })
-    return result
+    return getCitiesByDistance()
   }
 }
 
@@ -110,10 +76,4 @@ interface AmapLive {
   feels_like: string
   winddirection: string
   windpower: string
-}
-
-interface CityDistanceInfo {
-  cityName: string
-  adcode: string
-  distance: number
 }

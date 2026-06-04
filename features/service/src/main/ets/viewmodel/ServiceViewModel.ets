@@ -5,6 +5,7 @@ import { TokenStore } from 'common_datastore'
 import { ServiceStore } from 'common_datastore'
 import { ToastUtils } from 'common_uicomponents'
 import { ServiceRepository } from '../repository/ServiceRepository.ets'
+import { WeatherViewModel } from 'common_weather'
 import type { ServiceControlRequest } from 'common_mock'
 import router from '@ohos.router'
 
@@ -14,6 +15,9 @@ export class ServiceViewModel {
   @Trace cleanRoom: boolean = false
   @Trace isSOSActive: boolean = false
   @Trace isLoading: boolean = false
+
+  // 天气相关状态（委托给WeatherViewModel）
+  weatherViewModel: WeatherViewModel = new WeatherViewModel()
 
   private repository: ServiceRepository = new ServiceRepository()
   private tokenStore: TokenStore = TokenStore.getInstance()

@@ -5,49 +5,16 @@ import { router } from '@kit.ArkUI'
 import { promptAction } from '@kit.ArkUI'
 import { ToastUtils } from 'common_uicomponents'
 import { TokenStore } from 'common_datastore'
-import { WeatherService } from 'common_weather'
+import { WeatherService, getCitiesByDistance } from 'common_weather'
 import { ServiceViewModel } from '../viewmodel/ServiceViewModel.ets'
-import type { WeatherData, CityInfo, WeatherCondition } from 'common_weather'
-
-// 雨滴粒子
-interface RainDrop {
-  id: number
-  x: number
-  y: number
-  speed: number
-  length: number
-}
-
-// 天气提示语
-interface WeatherTip {
-  condition: WeatherCondition
-  tip: string
-  color: string
-}
-
-// 对话框按钮
-interface DialogButton {
-  text: string
-  color: string
-}
-
-// 天气提示语映射
-const WEATHER_TIPS: WeatherTip[] = [
-  { condition: 'sunny', tip: '阳光明媚，适宜户外活动', color: '#FFD700' },
-  { condition: 'cloudy', tip: '多云天气，记得防晒', color: '#B0C4DE' },
-  { condition: 'rainy', tip: '雨天路滑，请注意出行安全', color: '#6EA8FF' },
-  { condition: 'snowy', tip: '雪天路滑，请小心慢行', color: '#E0FFFF' },
-  { condition: 'foggy', tip: '雾天能见度低，请注意安全', color: '#D3D3D3' }
-]
+import { WEATHER_TIPS, getWeatherTip } from '../model/ServiceModel.ets'
+import type { WeatherData, CityInfo, WeatherCondition, WeatherTip, RainDrop } from 'common_weather'
 
 @ComponentV2
 @Entry
 export struct ServicePage {
   @Local viewModel: ServiceViewModel = new ServiceViewModel()
   @Local isSosCalling: boolean = false
-
-  // 天气相关状态
-  @Local selectedCityIndex: number = 0
   @Local cloudOffset: number = 0
   @Local rainDrops: RainDrop[] = []
   @Local snowDrops: RainDrop[] = []
@@ -55,7 +22,7 @@ export struct ServicePage {
   @Local isLoadingWeather: boolean = true
 
   // 城市列表（按距离东莞排序）
-  private cities: CityInfo[] = WeatherService.getInstance().getCitiesByDistance()
+  private cities: CityInfo[] = getCitiesByDistance()
 
   // 定时器ID
   private cloudTimer: number = -1
@@ -66,7 +33,7 @@ export struct ServicePage {
 
   // 获取当前城市
   private get currentCity(): CityInfo {
-    return this.cities[this.selectedCityIndex] || this.cities[0]
+    return this.cities[this.viewModel.weatherViewModel.selectedCityIndex] || this.cities[0]
   }
 
   // 获取天气文字描述
@@ -164,7 +131,7 @@ export struct ServicePage {
         let updated: RainDrop[] = []
         for (let i = 0; i < this.rainDrops.length; i++) {
           let d = this.rainDrops[i]
-          let newY = d.y + d.speed
+          let newY: number = d.y + d.speed
           if (newY < 200) {
             updated.push({
               id: d.id,
@@ -204,8 +171,8 @@ export struct ServicePage {
         let updated: RainDrop[] = []
         for (let i = 0; i < this.snowDrops.length; i++) {
           let d = this.snowDrops[i]
-          let newY = d.y + d.speed
-          let newX = d.x + Math.sin(newY * 0.05) * 0.5
+          let newY: number = d.y + d.speed
+          let newX: number = d.x + Math.sin(newY * 0.05) * 0.5
           if (newY < 200) {
             updated.push({
               id: d.id,
@@ -245,33 +212,6 @@ export struct ServicePage {
       clearInterval(this.snowMoveTimer)
       this.snowMoveTimer = -1
     }
-  }
-
-  // 显示城市选择器
-  private showCityPicker(): void {
-    // 显示前50个城市（最近的和主要城市）
-    const displayCities = this.cities.slice(0, 50)
-    const buttons: DialogButton[] = displayCities.map((city, index) => {
-      const distanceText = city.distance !== undefined ? ` (${city.distance}km)` : ''
-      return {
-        text: city.name + distanceText,
-        color: index === this.selectedCityIndex ? '#E8C27F' : '#666666'
-      } as DialogButton
-    })
-    promptAction.showDialog({
-      title: '选择城市（按距离东莞排序）',
-      buttons: buttons
-    }).then((result) => {
-      if (result.index >= 0 && result.index < displayCities.length) {
-        // 找到对应城市在原始列表中的索引
-        const selectedCity = displayCities[result.index]
-        const originalIndex = this.cities.findIndex(c => c.adcode === selectedCity.adcode)
-        if (originalIndex !== -1) {
-          this.selectedCityIndex = originalIndex
-          this.loadWeather()
-        }
-      }
-    })
   }
 
   // 退出登录
@@ -541,25 +481,61 @@ export struct ServicePage {
 
       // 天气信息层
       Column() {
-        // 城市选择行
+        // 城市搜索输入行
         Row() {
-          if (this.currentWeather) {
-            Text(this.currentWeather.city)
-              .fontSize(18)
-              .fontColor('#FFFFFF')
-          } else {
-            Text('加载中...')
-              .fontSize(18)
-              .fontColor('#FFFFFF')
-          }
-
-          Blank()
-
-          Text('点击选择城市')
-            .fontSize(14)
-            .fontColor('rgba(255,255,255,0.7)')
+          TextInput({ placeholder: '输入城市名搜索', text: this.viewModel.weatherViewModel.citySearchText })
+            .width('100%')
+            .height(44)
+            .fontSize(16)
+            .fontColor('#FFFFFF')
+            .placeholderColor('rgba(255,255,255,0.5)')
+            .backgroundColor('rgba(255,255,255,0.15)')
+            .borderRadius(8)
+            .padding({ left: 12, right: 12 })
+            .onChange((value: string) => {
+              this.viewModel.weatherViewModel.updateCitySearch(value)
+            })
+            .onSubmit(() => {
+              this.viewModel.weatherViewModel.applyFirstResult()
+              this.loadWeather()
+            })
         }
-        .onClick(() => this.showCityPicker())
+        .width('100%')
+        .margin({ bottom: 8 })
+
+        // 搜索结果列表（当有搜索结果时显示）
+        if (this.viewModel.weatherViewModel.searchResults.length > 0 && this.viewModel.weatherViewModel.citySearchText.length > 0) {
+          Column() {
+            Scroll() {
+              Column() {
+                ForEach(this.viewModel.weatherViewModel.searchResults, (city: CityInfo, index: number) => {
+                  Text(city.name + (city.distance !== undefined ? ` (${city.distance}km)` : ''))
+                    .fontSize(14)
+                    .fontColor(this.viewModel.weatherViewModel.selectedCityIndex === this.viewModel.weatherViewModel.getCityIndexByAdcode(city.adcode) ? '#E8C27F' : '#FFFFFF')
+                    .width('100%')
+                    .padding({ top: 8, bottom: 8 })
+                    .onClick(() => {
+                      this.viewModel.weatherViewModel.selectCity(this.viewModel.weatherViewModel.getCityIndexByAdcode(city.adcode))
+                      this.loadWeather()
+                    })
+                })
+              }
+              .padding(8)
+            }
+            .width('100%')
+            .height(120)
+            .backgroundColor('rgba(0,30,80,0.95)')
+            .borderRadius(8)
+          }
+          .width('100%')
+          .margin({ bottom: 8 })
+        }
+
+        // 城市名称
+        Text(this.currentCity.name)
+          .fontSize(16)
+          .fontColor('rgba(255,255,255,0.8)')
+          .margin({ bottom: 4 })
 
         // 温度和天气信息
         Row() {
@@ -619,7 +595,7 @@ export struct ServicePage {
       .padding(20)
     }
     .width('100%')
-    .height(220)
+    .height(260)
   }
 
   @Builder

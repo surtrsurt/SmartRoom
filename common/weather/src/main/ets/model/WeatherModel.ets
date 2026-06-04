@@ -15,3 +15,19 @@ export interface CityInfo {
   adcode: string
   distance?: number
 }
+
+// 天气提示语
+export interface WeatherTip {
+  condition: WeatherCondition
+  tip: string
+  color: string
+}
+
+// 雨滴/雪花粒子
+export interface RainDrop {
+  id: number
+  x: number
+  y: number
+  speed: number
+  length: number
+}
