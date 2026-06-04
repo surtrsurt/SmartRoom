@@ -23,8 +23,8 @@ export class HomeViewModel {
   @Trace isGoodNightExecuting: boolean = false
   // 直接追踪空调状态，解决UI更新问题
   @Trace airPower: boolean = false
-  @Trace autoModeOn: boolean = false   // 自动模式（送风）
-  @Trace powerfulModeOn: boolean = false  // 强劲模式（制冷）
+  @Trace autoModeOn: boolean = false   // 自动模式（制冷+自动风速）
+  @Trace powerfulModeOn: boolean = false  // 强劲模式（制冷+高风速）
   @Trace airTemp: number = 24
   @Trace airSpeed: number = 0  // 默认自动
   @Trace goodNightModeOn: boolean = false
@@ -120,9 +120,10 @@ export class HomeViewModel {
   }
 
   // 计算当前模式值（用于持久化和API）
+  // 0=自动模式(制冷+自动风速), 1=强劲模式(制冷+高风速+21度), -1=无模式
   private getCurrentMode(): number {
-    if (this.autoModeOn) return 0   // 自动模式=送风
-    if (this.powerfulModeOn) return 1  // 强劲模式=制冷
+    if (this.autoModeOn) return 0   // 自动模式=制冷+自动风速
+    if (this.powerfulModeOn) return 1  // 强劲模式=制冷+高风速+21度
     return -1  // 无模式
   }
 
@@ -150,7 +151,7 @@ export class HomeViewModel {
     }
   }
 
-  // 切换自动模式（送风）
+  // 切换自动模式（制冷+自动风速）
   toggleAutoMode(): void {
     if (!this.airPower) {
       ToastUtils.show('请先开启空调')
@@ -163,13 +164,14 @@ export class HomeViewModel {
       // 开启自动模式，同时关闭强劲模式
       this.autoModeOn = true
       this.powerfulModeOn = false
-      // 调用API：送风模式
-      this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'mode', value: 3 })
+      // 调用API：制冷模式 + 自动风速
+      this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'mode', value: 1 })
+      this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'speed', value: 0 })
     }
     this.syncAirState()
   }
 
-  // 切换强劲模式（制冷+21度）
+  // 切换强劲模式（制冷+高风速）
   togglePowerfulMode(): void {
     if (!this.airPower) {
       ToastUtils.show('请先开启空调')
@@ -182,8 +184,9 @@ export class HomeViewModel {
       // 开启强劲模式，同时关闭自动模式
       this.powerfulModeOn = true
       this.autoModeOn = false
-      // 调用API：制冷模式 + 21度
+      // 调用API：制冷模式 + 高风速 + 21度
       this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'mode', value: 1 })
+      this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'speed', value: 3 })
       this.airRepository.clickAirBtn(this.tokenStore.getToken(), { cmd: 'temp', value: 21 })
       this.airTemp = 21
     }
