@@ -77,3 +77,12 @@ interface AmapLive {
   winddirection: string
   windpower: string
 }
+
+// 导出WeatherViewModel
+export { WeatherViewModel } from '../viewmodel/WeatherViewModel'
+
+// 导出搜索工具
+export { searchCities, getCitiesByDistance } from '../util/CitySearchUtil'
+
+// 导出类型
+export type { WeatherData, CityInfo, WeatherCondition, WeatherTip, RainDrop } from '../model/WeatherModel'

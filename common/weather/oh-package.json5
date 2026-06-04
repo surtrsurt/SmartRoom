@@ -2,7 +2,7 @@
   "name": "common_weather",
   "version": "1.0.0",
   "description": "Weather common module",
-  "main": "./src/main/ets/WeatherExports.ets",
+  "main": "./src/main/ets/api/WeatherService.ets",
   "author": "",
   "license": "",
   "dependencies": {}
