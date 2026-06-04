@@ -2,7 +2,7 @@
   "name": "features_login",
   "version": "1.0.0",
   "description": "login feature module",
-  "main": "./src/main/ets/Index.ets",
+  "main": "./src/main/ets/view/LoginPage.ets",
   "author": "",
   "license": "",
   "dependencies": {

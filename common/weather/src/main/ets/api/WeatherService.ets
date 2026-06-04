@@ -1,5 +1,5 @@
 import { http } from '@kit.NetworkKit'
-import { WeatherData, CityInfo, WeatherCondition } from './ApiResponse'
+import type { WeatherData, CityInfo, WeatherCondition } from '../model/WeatherModel'
 import { PRESET_CITIES, DONGGUAN_LNG, DONGGUAN_LAT } from '../util/CityData'
 
 const BASE_URL = 'https://restapi.amap.com/v3'

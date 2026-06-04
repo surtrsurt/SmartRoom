@@ -2,7 +2,7 @@
   "name": "features_home",
   "version": "1.0.0",
   "description": "home feature module",
-  "main": "./src/main/ets/Index.ets",
+  "main": "./src/main/ets/view/HomePage.ets",
   "author": "",
   "license": "",
   "dependencies": {

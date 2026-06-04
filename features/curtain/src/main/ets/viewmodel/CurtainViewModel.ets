@@ -24,7 +24,7 @@ export class CurtainViewModel {
   // 最大位移像素
   private maxTranslate: number = 180
 
-  private repository = new CurtainRepository()
+  private repository: CurtainRepository = new CurtainRepository()
 
   aboutToAppear(): void {
     this.initState()

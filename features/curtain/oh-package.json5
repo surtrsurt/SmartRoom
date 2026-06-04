@@ -2,7 +2,7 @@
   "name": "features_curtain",
   "version": "1.0.0",
   "description": "curtain feature module",
-  "main": "./src/main/ets/Index.ets",
+  "main": "./src/main/ets/view/CurtainPage.ets",
   "author": "",
   "license": "",
   "dependencies": {

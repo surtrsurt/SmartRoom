@@ -2,7 +2,7 @@
   "name": "products_phone",
   "version": "1.0.0",
   "description": "phone product module",
-  "main": "Index.ets",
+  "main": "",
   "author": "",
   "license": "",
   "dependencies": {}

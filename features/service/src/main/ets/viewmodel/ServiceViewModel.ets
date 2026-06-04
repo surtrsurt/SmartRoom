@@ -2,36 +2,44 @@
 // 查拉图斯特拉如是说
 
 import { TokenStore } from 'common_datastore'
+import { ServiceStore } from 'common_datastore'
 import { ToastUtils } from 'common_uicomponents'
 import { ServiceRepository } from '../repository/ServiceRepository.ets'
 import type { ServiceControlRequest } from 'common_mock'
 import router from '@ohos.router'
 
+@ObservedV2
 export class ServiceViewModel {
-  disturbMode: boolean = false
-  cleanRoom: boolean = false
-  isSOSActive: boolean = false
-  isLoading: boolean = false
+  @Trace disturbMode: boolean = false
+  @Trace cleanRoom: boolean = false
+  @Trace isSOSActive: boolean = false
+  @Trace isLoading: boolean = false
 
-  private repository = new ServiceRepository()
-  private tokenStore = TokenStore.getInstance()
+  private repository: ServiceRepository = new ServiceRepository()
+  private tokenStore: TokenStore = TokenStore.getInstance()
+  private serviceStore: ServiceStore = ServiceStore.getInstance()
 
-  async toggleDisturbMode(): Promise<void> {
-    this.disturbMode = !this.disturbMode
-
-    const req: ServiceControlRequest = { type: 'disturb' }
-    await this.repository.controlService(req)
-
-    ToastUtils.show(this.disturbMode ? '请勿打扰已开启' : '请勿打扰已关闭')
+  aboutToAppear(): void {
+    // 注册服务状态监听
+    this.serviceStore.registerDisturbListener((enabled: boolean) => {
+      this.disturbMode = enabled
+    })
+    this.serviceStore.registerCleanListener((enabled: boolean) => {
+      this.cleanRoom = enabled
+    })
+    // 同步初始状态
+    this.disturbMode = this.serviceStore.disturbMode
+    this.cleanRoom = this.serviceStore.cleanRoom
   }
 
-  async toggleCleanRoom(): Promise<void> {
-    this.cleanRoom = !this.cleanRoom
+  toggleDisturbMode(): void {
+    this.serviceStore.setDisturbMode(!this.serviceStore.disturbMode)
+    ToastUtils.show(this.serviceStore.disturbMode ? '请勿打扰已开启' : '请勿打扰已关闭')
+  }
 
-    const req: ServiceControlRequest = { type: 'clean' }
-    await this.repository.controlService(req)
-
-    ToastUtils.show(this.cleanRoom ? '清理房间已请求' : '清理房间已取消')
+  toggleCleanRoom(): void {
+    this.serviceStore.setCleanRoom(!this.serviceStore.cleanRoom)
+    ToastUtils.show(this.serviceStore.cleanRoom ? '清理房间已请求' : '清理房间已取消')
   }
 
   async requestSOS(): Promise<void> {

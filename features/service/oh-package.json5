@@ -2,7 +2,7 @@
   "name": "features_service",
   "version": "1.0.0",
   "description": "service feature module",
-  "main": "./src/main/ets/Index.ets",
+  "main": "./src/main/ets/view/ServicePage.ets",
   "author": "",
   "license": "",
   "dependencies": {

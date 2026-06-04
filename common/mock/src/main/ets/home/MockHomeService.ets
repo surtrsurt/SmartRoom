@@ -7,26 +7,16 @@ export interface ApiResponse<T> {
   data?: T
 }
 
-export interface RoomState {
-  roomNo: string
-  firstName: string
-  lights: LightState
-  air: AirState
-  curtains: CurtainState
-  disturbMode: boolean
-  cleanRoom: boolean
+export interface HardwareItem {
+  id: number
+  name: string
+  on: boolean
 }
 
 export interface LightState {
   mainSwitch: boolean
   scene: number
   hardwareList: HardwareItem[]
-}
-
-export interface HardwareItem {
-  id: number
-  name: string
-  on: boolean
 }
 
 export interface AirState {
@@ -41,6 +31,16 @@ export interface CurtainState {
   rightCurtain: number
   leftSheer: number
   rightSheer: number
+}
+
+export interface RoomState {
+  roomNo: string
+  firstName: string
+  lights: LightState
+  air: AirState
+  curtains: CurtainState
+  disturbMode: boolean
+  cleanRoom: boolean
 }
 
 export class MockHomeService {

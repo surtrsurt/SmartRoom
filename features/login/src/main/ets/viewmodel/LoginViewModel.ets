@@ -14,8 +14,8 @@ export class LoginViewModel {
   rememberMe: boolean = true
   isLoading: boolean = false
 
-  private repository = new LoginRepository()
-  private tokenStore = TokenStore.getInstance()
+  private repository: LoginRepository = new LoginRepository()
+  private tokenStore: TokenStore = TokenStore.getInstance()
 
   setRoomNo(value: string): void {
     this.roomNo = value

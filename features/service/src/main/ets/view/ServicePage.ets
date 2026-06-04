@@ -6,6 +6,7 @@ import { promptAction } from '@kit.ArkUI'
 import { ToastUtils } from 'common_uicomponents'
 import { TokenStore } from 'common_datastore'
 import { WeatherService } from 'common_weather'
+import { ServiceViewModel } from '../viewmodel/ServiceViewModel.ets'
 import type { WeatherData, CityInfo, WeatherCondition } from 'common_weather'
 
 // 雨滴粒子
@@ -42,9 +43,7 @@ const WEATHER_TIPS: WeatherTip[] = [
 @ComponentV2
 @Entry
 export struct ServicePage {
-
-  @Local dndEnable: boolean = false
-  @Local cleanEnable: boolean = false
+  @Local viewModel: ServiceViewModel = new ServiceViewModel()
   @Local isSosCalling: boolean = false
 
   // 天气相关状态
@@ -123,6 +122,7 @@ export struct ServicePage {
   }
 
   aboutToAppear(): void {
+    this.viewModel.aboutToAppear()
     this.startWeatherAnimation()
     this.loadWeather()
   }
@@ -376,32 +376,26 @@ export struct ServicePage {
 
         Text('请勿打扰')
           .fontSize(28)
-          .fontColor(this.dndEnable ? '#DDB97A' : '#F4D39A')
+          .fontColor(this.viewModel.disturbMode ? '#DDB97A' : '#F4D39A')
           .margin({ top: 20 })
 
-        Image(this.dndEnable ? $r('app.media.service_toggle_on') : $r('app.media.service_toggle_off'))
+        Image(this.viewModel.disturbMode ? $r('app.media.service_toggle_on') : $r('app.media.service_toggle_off'))
           .width(70)
           .height(70)
           .onClick(() => {
-            animateTo({
-              duration: 300,
-              curve: Curve.EaseOut
-            }, () => {
-              this.dndEnable = !this.dndEnable
-              ToastUtils.show(this.dndEnable ? '请勿打扰已开启' : '请勿打扰已关闭')
-            })
+            this.viewModel.toggleDisturbMode()
           })
           .margin({ top: 30 })
       }
       .width('48%')
       .height(300)
       .justifyContent(FlexAlign.Center)
-      .backgroundColor(this.dndEnable ? 'rgba(255,215,120,0.15)' : 'rgba(0,30,80,0.92)')
+      .backgroundColor(this.viewModel.disturbMode ? 'rgba(255,215,120,0.15)' : 'rgba(0,30,80,0.92)')
       .borderRadius(24)
-      .border({ width: 1, color: this.dndEnable ? '#DDB97A' : '#6EA8FF' })
+      .border({ width: 1, color: this.viewModel.disturbMode ? '#DDB97A' : '#6EA8FF' })
       .shadow({
         radius: 25,
-        color: this.dndEnable ? 'rgba(255,215,120,0.25)' : 'rgba(80,120,255,0.25)'
+        color: this.viewModel.disturbMode ? 'rgba(255,215,120,0.25)' : 'rgba(80,120,255,0.25)'
       })
 
       // 清理房间卡片
@@ -412,32 +406,26 @@ export struct ServicePage {
 
         Text('清理房间')
           .fontSize(28)
-          .fontColor(this.cleanEnable ? '#DDB97A' : '#F4D39A')
+          .fontColor(this.viewModel.cleanRoom ? '#DDB97A' : '#F4D39A')
           .margin({ top: 20 })
 
-        Image(this.cleanEnable ? $r('app.media.service_toggle_on') : $r('app.media.service_toggle_off'))
+        Image(this.viewModel.cleanRoom ? $r('app.media.service_toggle_on') : $r('app.media.service_toggle_off'))
           .width(70)
           .height(70)
           .onClick(() => {
-            animateTo({
-              duration: 300,
-              curve: Curve.EaseOut
-            }, () => {
-              this.cleanEnable = !this.cleanEnable
-              ToastUtils.show(this.cleanEnable ? '清理房间已预约' : '清理房间已取消')
-            })
+            this.viewModel.toggleCleanRoom()
           })
           .margin({ top: 30 })
       }
       .width('48%')
       .height(300)
       .justifyContent(FlexAlign.Center)
-      .backgroundColor(this.cleanEnable ? 'rgba(255,215,120,0.15)' : 'rgba(0,30,80,0.92)')
+      .backgroundColor(this.viewModel.cleanRoom ? 'rgba(255,215,120,0.15)' : 'rgba(0,30,80,0.92)')
       .borderRadius(24)
-      .border({ width: 1, color: this.cleanEnable ? '#DDB97A' : '#6EA8FF' })
+      .border({ width: 1, color: this.viewModel.cleanRoom ? '#DDB97A' : '#6EA8FF' })
       .shadow({
         radius: 25,
-        color: this.cleanEnable ? 'rgba(255,215,120,0.25)' : 'rgba(80,120,255,0.25)'
+        color: this.viewModel.cleanRoom ? 'rgba(255,215,120,0.25)' : 'rgba(80,120,255,0.25)'
       })
     }
   }

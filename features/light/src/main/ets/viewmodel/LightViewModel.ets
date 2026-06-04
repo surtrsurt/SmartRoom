@@ -35,8 +35,8 @@ export class LightViewModel {
     return this.lightSceneStore.mainSwitch
   }
 
-  private repository = new LightRepository()
-  private tokenStore = TokenStore.getInstance()
+  private repository: LightRepository = new LightRepository()
+  private tokenStore: TokenStore = TokenStore.getInstance()
 
   constructor() {
     // 初始化硬件列表（包含图标信息）

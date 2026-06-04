@@ -4,6 +4,12 @@
 import { AirModeNames, AirSpeedNames } from '../model/AirModel.ets'
 import type { AirState } from '../model/AirModel.ets'
 import { ToastUtils } from 'common_uicomponents'
+import { AirRepository } from '../repository/AirRepository.ets'
+
+// 导出AirRepository供其他模块使用
+export { AirRepository }
+
+// AirConditionerCard组件定义...
 
 @ComponentV2
 export struct AirConditionerCard {

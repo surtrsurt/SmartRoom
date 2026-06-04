@@ -2,10 +2,11 @@
   "name": "common_mock",
   "version": "1.0.0",
   "description": "mock common module",
-  "main": "./src/main/ets/Index.ets",
+  "main": "./src/main/ets/MockExports.ets",
   "author": "",
   "license": "",
   "dependencies": {
-    "common_network": "file:../network"
+    "common_network": "file:../network",
+    "common_datastore": "file:../datastore"
   }
 }

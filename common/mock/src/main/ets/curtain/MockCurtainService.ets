@@ -1,6 +1,18 @@
 // Mock窗帘服务
 // 查拉图斯特拉如是说
 
+export interface CurtainState {
+  leftCurtain: number
+  rightCurtain: number
+  leftSheer: number
+  rightSheer: number
+}
+
+export interface CurtainControlRequest {
+  type: 'curtain' | 'sheer'
+  action: 'open' | 'close' | 'pause'
+}
+
 export class MockCurtainService {
   static async controlCurtain(request: CurtainControlRequest): Promise<boolean> {
     await new Promise<void>(resolve => setTimeout(resolve, 300))
@@ -16,16 +28,4 @@ export class MockCurtainService {
     }
     return state
   }
-}
-
-export interface CurtainControlRequest {
-  type: 'curtain' | 'sheer'
-  action: 'open' | 'close' | 'pause'
-}
-
-export interface CurtainState {
-  leftCurtain: number
-  rightCurtain: number
-  leftSheer: number
-  rightSheer: number
 }

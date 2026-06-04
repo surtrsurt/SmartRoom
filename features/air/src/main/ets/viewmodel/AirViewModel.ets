@@ -13,8 +13,8 @@ export class AirViewModel {
   speed: number = 1
   isLoading: boolean = false
 
-  private repository = new AirRepository()
-  private tokenStore = TokenStore.getInstance()
+  private repository: AirRepository = new AirRepository()
+  private tokenStore: TokenStore = TokenStore.getInstance()
 
   async sendCommand(cmd: string, value?: number): Promise<void> {
     const token = this.tokenStore.getToken()

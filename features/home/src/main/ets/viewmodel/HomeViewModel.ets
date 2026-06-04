@@ -5,10 +5,12 @@ import { hilog } from '@kit.PerformanceAnalysisKit'
 import { TokenStore } from 'common_datastore'
 import { RoomStore } from 'common_datastore'
 import { LightSceneStore } from 'common_datastore'
+import { ServiceStore } from 'common_datastore'
 import { ToastUtils } from 'common_uicomponents'
 import { HomeRepository } from '../repository/HomeRepository.ets'
 import { AirRepository } from 'features_air'
 import type { RoomState } from '../model/HomeModel.ets'
+import type { AirState } from 'common_datastore'
 
 @ObservedV2
 export class HomeViewModel {
@@ -34,11 +36,13 @@ export class HomeViewModel {
 
   // 共享灯光场景Store
   lightSceneStore: LightSceneStore = LightSceneStore.getInstance()
+  // 共享服务状态Store
+  serviceStore: ServiceStore = ServiceStore.getInstance()
 
-  private repository = new HomeRepository()
-  private airRepository = new AirRepository()
-  private tokenStore = TokenStore.getInstance()
-  private roomStore = RoomStore.getInstance()
+  private repository: HomeRepository = new HomeRepository()
+  private airRepository: AirRepository = new AirRepository()
+  private tokenStore: TokenStore = TokenStore.getInstance()
+  private roomStore: RoomStore = RoomStore.getInstance()
 
   async loadRoomState(): Promise<void> {
     const token = this.tokenStore.getToken()
@@ -56,6 +60,18 @@ export class HomeViewModel {
       this.goodNightModeOn = enabled
     })
 
+    // 注册服务状态监听（请勿打扰/清理房间双向同步）
+    this.serviceStore.registerDisturbListener((enabled: boolean) => {
+      this.disturbModeOn = enabled
+    })
+    this.serviceStore.registerCleanListener((enabled: boolean) => {
+      this.cleanRoomOn = enabled
+    })
+
+    // 同步初始服务状态
+    this.disturbModeOn = this.serviceStore.disturbMode
+    this.cleanRoomOn = this.serviceStore.cleanRoom
+
     this.isLoading = true
 
     try {
@@ -65,7 +81,7 @@ export class HomeViewModel {
       this.firstName = state.firstName
       this.roomState = state
       // 同步追踪的空调状态（从持久化存储恢复数据）
-      const savedAir = this.roomStore.getAirState()
+      const savedAir: AirState | null = this.roomStore.getAirState()
       if (state.air) {
         this.airPower = savedAir?.power ?? state.air.power
         this.airTemp = savedAir?.temp ?? state.air.temp
@@ -211,13 +227,13 @@ export class HomeViewModel {
   }
 
   toggleDisturbMode(): void {
-    this.disturbModeOn = !this.disturbModeOn
-    ToastUtils.show(this.disturbModeOn ? '请勿打扰已开启' : '请勿打扰已关闭')
+    this.serviceStore.setDisturbMode(!this.serviceStore.disturbMode)
+    ToastUtils.show(this.serviceStore.disturbMode ? '请勿打扰已开启' : '请勿打扰已关闭')
   }
 
   toggleCleanRoom(): void {
-    this.cleanRoomOn = !this.cleanRoomOn
-    ToastUtils.show(this.cleanRoomOn ? '清理房间已预约' : '清理房间已取消')
+    this.serviceStore.setCleanRoom(!this.serviceStore.cleanRoom)
+    ToastUtils.show(this.serviceStore.cleanRoom ? '清理房间已预约' : '清理房间已取消')
   }
 
   toggleLeftNightLight(): void {

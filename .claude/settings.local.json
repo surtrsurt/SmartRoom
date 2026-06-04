@@ -60,7 +60,13 @@
       "Bash(rm -rf products/phone/entry/build features/*/build common/*/build .hvigor)",
       "Bash('E:/DevEcoStudio/DS/DevEco Studio/tools/node/node.exe' 'E:/DevEcoStudio/DS/DevEco Studio/tools/hvigor/bin/hvigorw.js' --mode module -p module=entry@default -p product=default -p requiredDeviceType=phone assembleHap --no-daemon)",
       "Bash(rm -rf features/service/build)",
-      "Bash(\"E:/DevEcoStudio/DS/DevEco Studio/tools/node/node.exe\" \"E:/DevEcoStudio/DS/DevEco Studio/tools/hvigor/bin/hvigorw.js\" --mode module -p module=features_service@default assembleHar --no-daemon)"
+      "Bash(\"E:/DevEcoStudio/DS/DevEco Studio/tools/node/node.exe\" \"E:/DevEcoStudio/DS/DevEco Studio/tools/hvigor/bin/hvigorw.js\" --mode module -p module=features_service@default assembleHar --no-daemon)",
+      "Bash(find /c/HarmonyStudy/SmartRoom/common -type f -name *.ets)",
+      "Bash(find /c/HarmonyStudy/SmartRoom/features -type f -name *.ets)",
+      "Bash(ls /c/HarmonyStudy/SmartRoom/common/*/src/main/ets/)",
+      "Bash(ls /c/HarmonyStudy/SmartRoom/features/*/src/main/ets/)",
+      "Bash(cmd //c \"hvigor --build-mode debug assembleApp\")",
+      "Bash(cmd //c \"hvigor --build-mode debug assembleApp 2>&1\")"
     ]
   }
 }

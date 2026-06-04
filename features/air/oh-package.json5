@@ -2,7 +2,7 @@
   "name": "features_air",
   "version": "1.0.0",
   "description": "air feature module",
-  "main": "./src/main/ets/Index.ets",
+  "main": "./src/main/ets/view/AirPage.ets",
   "author": "",
   "license": "",
   "dependencies": {
