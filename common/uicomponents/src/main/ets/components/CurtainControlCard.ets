@@ -1,4 +1,4 @@
-// 窗帘控制卡片 - 包含窗帘预览、进度条和控制按钮
+// 窗帘控制卡片
 // 查拉图斯特拉如是说
 
 @ComponentV2
@@ -132,13 +132,12 @@ export struct CurtainControlCard {
 
   private getHighlighted(action: string): boolean {
     const type = this.isCloth ? 'cloth' : 'gauze'
-    const selected = this.selectedControl
 
     if (action === 'pause') {
       return this.curtainState === 'paused'
     }
 
-    if (selected !== type) {
+    if (this.selectedControl !== type) {
       return false
     }
 

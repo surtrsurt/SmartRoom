@@ -21,8 +21,14 @@ export class CurtainViewModel {
   // 当前选中的控制按钮: 'none' / 'allOpen' / 'allClose' / 'cloth' / 'gauze'
   @Trace selectedControl: string = 'none'
 
-  // 最大位移像素
-  private maxTranslate: number = 180
+  // 动画时长(ms)
+  private animationDuration: number = 500
+  // 动画步进间隔(ms)
+  private animationStep: number = 16
+  // 布帘动画定时器
+  private clothAnimationTimer: number = -1
+  // 窗纱动画定时器
+  private gauzeAnimationTimer: number = -1
 
   private repository: CurtainRepository = new CurtainRepository()
 
@@ -38,52 +44,34 @@ export class CurtainViewModel {
     this.gauzeState = this.gauzePercent === 1.0 ? 'opened' : 'closed'
   }
 
-  // 获取布帘左边的 translateX（负值往左移）
-  get clothLeftTranslate(): number {
-    return -this.clothPercent * this.maxTranslate
-  }
-
-  // 获取布帘右边的 translateX（正值往右移）
-  get clothRightTranslate(): number {
-    return this.clothPercent * this.maxTranslate
-  }
-
-  // 获取窗纱左边的 translateX
-  get gauzeLeftTranslate(): number {
-    return -this.gauzePercent * this.maxTranslate
-  }
-
-  // 获取窗纱右边的 translateX
-  get gauzeRightTranslate(): number {
-    return this.gauzePercent * this.maxTranslate
-  }
-
-  // 是否全部打开（布帘和窗纱都打开）
-  get isAllOpen(): boolean {
-    return this.clothPercent === 1.0 && this.gauzePercent === 1.0
-  }
-
-  // 是否全部关闭（布帘和窗纱都关闭）
-  get isAllClosed(): boolean {
-    return this.clothPercent === 0.0 && this.gauzePercent === 0.0
-  }
-
   // 布帘打开
   openCloth(): void {
+    if (this.clothState === 'paused') {
+      this.clothState = 'opening'
+      this.startClothAnimation(1.0)
+      return
+    }
     if (this.clothState === 'opening' || this.clothState === 'opened') {
-      return // 已在打开中或已打开
+      return
     }
     this.clothState = 'opening'
     this.selectedControl = 'cloth'
+    this.startClothAnimation(1.0)
   }
 
   // 布帘关闭
   closeCloth(): void {
+    if (this.clothState === 'paused') {
+      this.clothState = 'closing'
+      this.startClothAnimation(0.0)
+      return
+    }
     if (this.clothState === 'closing' || this.clothState === 'closed') {
-      return // 已在关闭中或已关闭
+      return
     }
     this.clothState = 'closing'
     this.selectedControl = 'cloth'
+    this.startClothAnimation(0.0)
   }
 
   // 布帘暂停
@@ -94,34 +82,34 @@ export class CurtainViewModel {
     }
   }
 
-  // 更新布帘进度（动画中由UI调用）
-  updateClothPercent(percent: number): void {
-    this.clothPercent = percent
-    if (percent >= 1.0) {
-      this.clothPercent = 1.0
-      this.clothState = 'opened'
-    } else if (percent <= 0) {
-      this.clothPercent = 0
-      this.clothState = 'closed'
-    }
-  }
-
   // 窗纱打开
   openGauze(): void {
+    if (this.gauzeState === 'paused') {
+      this.gauzeState = 'opening'
+      this.startGauzeAnimation(1.0)
+      return
+    }
     if (this.gauzeState === 'opening' || this.gauzeState === 'opened') {
       return
     }
     this.gauzeState = 'opening'
     this.selectedControl = 'gauze'
+    this.startGauzeAnimation(1.0)
   }
 
   // 窗纱关闭
   closeGauze(): void {
+    if (this.gauzeState === 'paused') {
+      this.gauzeState = 'closing'
+      this.startGauzeAnimation(0.0)
+      return
+    }
     if (this.gauzeState === 'closing' || this.gauzeState === 'closed') {
       return
     }
     this.gauzeState = 'closing'
     this.selectedControl = 'gauze'
+    this.startGauzeAnimation(0.0)
   }
 
   // 窗纱暂停
@@ -132,8 +120,98 @@ export class CurtainViewModel {
     }
   }
 
+  // 全部打开
+  openAll(): void {
+    this.selectedControl = 'allOpen'
+    this.clothState = 'opening'
+    this.gauzeState = 'opening'
+    this.startClothAnimation(1.0)
+    this.startGauzeAnimation(1.0)
+  }
+
+  // 全部关闭
+  closeAll(): void {
+    this.selectedControl = 'allClose'
+    this.clothState = 'closing'
+    this.gauzeState = 'closing'
+    this.startClothAnimation(0.0)
+    this.startGauzeAnimation(0.0)
+  }
+
+  // 启动布帘动画
+  private startClothAnimation(targetPercent: number): void {
+    if (this.clothAnimationTimer >= 0) {
+      clearInterval(this.clothAnimationTimer)
+      this.clothAnimationTimer = -1
+    }
+
+    const startPercent = this.clothPercent
+    const step = (targetPercent - startPercent) / (this.animationDuration / this.animationStep)
+    this.clothAnimationTimer = setInterval(() => {
+      if (this.clothState === 'paused') {
+        return
+      }
+      const current = this.clothPercent
+      const newPercent = targetPercent > current ? Math.min(current + step, targetPercent) : Math.max(current + step, targetPercent)
+      this.updateClothPercent(newPercent)
+      if ((step > 0 && newPercent >= targetPercent) || (step < 0 && newPercent <= targetPercent)) {
+        clearInterval(this.clothAnimationTimer)
+        this.clothAnimationTimer = -1
+        if (targetPercent === 1.0) {
+          this.updateClothPercent(1.0)
+          this.syncClothToStore()
+        } else {
+          this.updateClothPercent(0)
+          this.syncClothClosedToStore()
+        }
+      }
+    }, this.animationStep)
+  }
+
+  // 启动窗纱动画
+  private startGauzeAnimation(targetPercent: number): void {
+    if (this.gauzeAnimationTimer >= 0) {
+      clearInterval(this.gauzeAnimationTimer)
+      this.gauzeAnimationTimer = -1
+    }
+
+    const startPercent = this.gauzePercent
+    const step = (targetPercent - startPercent) / (this.animationDuration / this.animationStep)
+    this.gauzeAnimationTimer = setInterval(() => {
+      if (this.gauzeState === 'paused') {
+        return
+      }
+      const current = this.gauzePercent
+      const newPercent = targetPercent > current ? Math.min(current + step, targetPercent) : Math.max(current + step, targetPercent)
+      this.updateGauzePercent(newPercent)
+      if ((step > 0 && newPercent >= targetPercent) || (step < 0 && newPercent <= targetPercent)) {
+        clearInterval(this.gauzeAnimationTimer)
+        this.gauzeAnimationTimer = -1
+        if (targetPercent === 1.0) {
+          this.updateGauzePercent(1.0)
+          this.syncGauzeToStore()
+        } else {
+          this.updateGauzePercent(0)
+          this.syncGauzeClosedToStore()
+        }
+      }
+    }, this.animationStep)
+  }
+
+  // 更新布帘进度
+  private updateClothPercent(percent: number): void {
+    this.clothPercent = percent
+    if (percent >= 1.0) {
+      this.clothPercent = 1.0
+      this.clothState = 'opened'
+    } else if (percent <= 0) {
+      this.clothPercent = 0
+      this.clothState = 'closed'
+    }
+  }
+
   // 更新窗纱进度
-  updateGauzePercent(percent: number): void {
+  private updateGauzePercent(percent: number): void {
     this.gauzePercent = percent
     if (percent >= 1.0) {
       this.gauzePercent = 1.0
@@ -144,42 +222,28 @@ export class CurtainViewModel {
     }
   }
 
-  // 动画完成后的状态同步（供UI调用）
-  syncClothToStore(): void {
+  // 同步到Store
+  private syncClothToStore(): void {
     const req: CurtainControlRequest = { type: 'curtain', action: 'open' }
     this.repository.controlCurtain(req)
     ToastUtils.show('布帘已打开')
   }
 
-  syncClothClosedToStore(): void {
+  private syncClothClosedToStore(): void {
     const req: CurtainControlRequest = { type: 'curtain', action: 'close' }
     this.repository.controlCurtain(req)
     ToastUtils.show('布帘已关闭')
   }
 
-  syncGauzeToStore(): void {
+  private syncGauzeToStore(): void {
     const req: CurtainControlRequest = { type: 'sheer', action: 'open' }
     this.repository.controlCurtain(req)
     ToastUtils.show('窗纱已打开')
   }
 
-  syncGauzeClosedToStore(): void {
+  private syncGauzeClosedToStore(): void {
     const req: CurtainControlRequest = { type: 'sheer', action: 'close' }
     this.repository.controlCurtain(req)
     ToastUtils.show('窗纱已关闭')
-  }
-
-  async openAll(): Promise<void> {
-    hilog.info(0x0000, 'CurtainViewModel', 'openAll')
-    this.openCloth()
-    this.openGauze()
-    this.selectedControl = 'allOpen'
-  }
-
-  async closeAll(): Promise<void> {
-    hilog.info(0x0000, 'CurtainViewModel', 'closeAll')
-    this.closeCloth()
-    this.closeGauze()
-    this.selectedControl = 'allClose'
   }
 }
