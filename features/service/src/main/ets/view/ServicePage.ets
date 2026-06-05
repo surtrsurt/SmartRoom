@@ -1,10 +1,8 @@
 // 服务页面
 // 查拉图斯特拉如是说
 
-import { promptAction } from '@kit.ArkUI'
 import { ToastUtils, TitleSection, ServiceSwitchCard, ServiceSosCard, ServiceLogoutCard } from 'common_uicomponents'
 import { ServiceWeatherCard } from '../components'
-import { TokenStore } from 'common_datastore'
 import { ServiceControlViewModel } from '../viewmodel/ServiceControlViewModel.ets'
 import { ServiceWeatherViewModel } from '../viewmodel/ServiceWeatherViewModel.ets'
 import { WEATHER_TIPS } from '../model/ServiceModel.ets'
@@ -27,34 +25,6 @@ export struct ServicePage {
 
   aboutToDisappear(): void {
     this.weatherVM.stopAnimator()
-  }
-
-  private async logout(): Promise<void> {
-    const action = await promptAction.showDialog({
-      title: '退出登录',
-      message: '确定要退出登录吗？',
-      buttons: [
-        { text: '取消', color: '#666666' },
-        { text: '确定', color: '#E8C27F' }
-      ]
-    })
-
-    if (action.index === 1) {
-      AppStorage.setOrCreate('token', '')
-      AppStorage.setOrCreate('loginTime', 0)
-      AppStorage.setOrCreate('isLogin', false)
-      AppStorage.setOrCreate('firstName', '')
-
-      const tokenStore = TokenStore.getInstance()
-      tokenStore.clearToken()
-
-      ToastUtils.show('已退出登录')
-
-      if (this.pathStack) {
-        this.pathStack.clear()
-        this.pathStack.pushPathByName('login', null)
-      }
-    }
   }
 
   private handleSosClick(): void {
@@ -123,7 +93,7 @@ export struct ServicePage {
             },
             getCityIndexByAdcode: (adcode: string) => this.weatherVM.getCityIndexByAdcode(adcode)
           })
-          ServiceLogoutCard({ onTap: () => this.logout() })
+          ServiceLogoutCard({ onTap: () => this.serviceVM.logout() })
           Blank().height(120)
         }
         .padding({ left: 24, right: 24, bottom: 24 })
