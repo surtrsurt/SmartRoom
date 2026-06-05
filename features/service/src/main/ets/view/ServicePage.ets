@@ -2,102 +2,32 @@
 // 查拉图斯特拉如是说
 
 import { promptAction } from '@kit.ArkUI'
-import { ToastUtils, ServiceToggleCard } from 'common_uicomponents'
+import { ToastUtils, ServiceToggleCard, TitleSection, RainDrop } from 'common_uicomponents'
 import { TokenStore } from 'common_datastore'
-import { WeatherService, getCitiesByDistance } from 'common_weather'
-import { WeatherAnimator, getWeatherAnimator, RainDrop, WeatherConditionType } from 'common_uicomponents'
-import { ServiceViewModel } from '../viewmodel/ServiceViewModel.ets'
+import { ServiceControlViewModel } from '../viewmodel/ServiceControlViewModel.ets'
+import { ServiceWeatherViewModel } from '../viewmodel/ServiceWeatherViewModel.ets'
 import { WEATHER_TIPS } from '../model/ServiceModel.ets'
 import type { WeatherData, CityInfo, WeatherTip } from 'common_weather'
 import type { NavPathStackInterface } from 'common_datastore'
 
 @ComponentV2
 export struct ServicePage {
-  @Local viewModel: ServiceViewModel = new ServiceViewModel()
   @Param pathStack: NavPathStackInterface | undefined = undefined
+  @Local serviceVM: ServiceControlViewModel = new ServiceControlViewModel()
+  @Local weatherVM: ServiceWeatherViewModel = new ServiceWeatherViewModel()
   @Local isSosCalling: boolean = false
-  @Local cloudOffset: number = 0
-  @Local rainDrops: RainDrop[] = []
-  @Local snowDrops: RainDrop[] = []
-  @Local currentWeather: WeatherData | null = null
-  @Local isLoadingWeather: boolean = true
-
-  // 城市列表（按距离东莞排序）
-  private cities: CityInfo[] = getCitiesByDistance()
-  private weatherAnimator: WeatherAnimator = getWeatherAnimator()
-
-  // 获取当前城市
-  private get currentCity(): CityInfo {
-    return this.cities[this.viewModel.weatherViewModel.selectedCityIndex] || this.cities[0]
-  }
-
-  // 获取天气文字描述
-  private getConditionText(condition: WeatherConditionType): string {
-    switch (condition) {
-      case 'sunny': return '晴'
-      case 'cloudy': return '多云'
-      case 'rainy': return '雨'
-      case 'snowy': return '雪'
-      case 'foggy': return '雾'
-      default: return '多云'
-    }
-  }
-
-  // 获取温馨提示
-  private getWeatherTipInfo(): WeatherTip {
-    if (!this.currentWeather) return WEATHER_TIPS[1]
-    const tip = WEATHER_TIPS.find(t => t.condition === this.currentWeather!.condition)
-    return tip || WEATHER_TIPS[1]
-  }
-
-  // 加载天气数据
-  private async loadWeather(): Promise<void> {
-    this.isLoadingWeather = true
-    const weatherService = WeatherService.getInstance()
-    const adcode = this.currentCity.adcode
-
-    try {
-      const weather = await weatherService.fetchWeather(adcode)
-      if (weather) {
-        this.currentWeather = weather as WeatherData
-        this.weatherAnimator.updateCondition(this.currentWeather.condition)
-      } else {
-        this.currentWeather = {
-          city: this.currentCity.name,
-          temperature: 0,
-          condition: 'cloudy',
-          humidity: 50,
-          windDirection: '',
-          windPower: ''
-        }
-        this.weatherAnimator.updateCondition('cloudy')
-      }
-    } catch (err) {
-      console.error(`加载天气失败: ${err}`)
-    } finally {
-      this.isLoadingWeather = false
-    }
-  }
 
   aboutToAppear(): void {
-    this.viewModel.aboutToAppear()
-    this.viewModel.pathStack = this.pathStack
-
-    // 设置动画回调
-    this.weatherAnimator.setCallbacks(
-      (offset: number) => { this.cloudOffset = offset },
-      (drops: RainDrop[]) => { this.rainDrops = drops },
-      (drops: RainDrop[]) => { this.snowDrops = drops }
-    )
-
-    this.loadWeather()
+    this.serviceVM.aboutToAppear()
+    this.serviceVM.pathStack = this.pathStack
+    this.weatherVM.setAnimatorCallbacks()
+    this.weatherVM.loadWeather()
   }
 
   aboutToDisappear(): void {
-    this.weatherAnimator.stopAll()
+    this.weatherVM.stopAnimator()
   }
 
-  // 退出登录
   private async logout(): Promise<void> {
     const action = await promptAction.showDialog({
       title: '退出登录',
@@ -126,7 +56,6 @@ export struct ServicePage {
     }
   }
 
-  // 处理SOS点击
   private handleSosClick(): void {
     if (this.isSosCalling) {
       return
@@ -143,6 +72,12 @@ export struct ServicePage {
     }, 5000)
   }
 
+  private getWeatherTipInfo(): WeatherTip {
+    if (!this.weatherVM.currentWeather) return WEATHER_TIPS[1]
+    const tip = WEATHER_TIPS.find(t => t.condition === this.weatherVM.currentWeather!.condition)
+    return tip || WEATHER_TIPS[1]
+  }
+
   build() {
     Stack() {
       Image($r('app.media.service_bg'))
@@ -157,20 +92,14 @@ export struct ServicePage {
 
       Scroll() {
         Column({ space: 22 }) {
-          this.TitleBar()
+          TitleSection({ title: '服务控制' })
           this.ServiceSwitchArea()
           this.SosCard()
           this.WeatherCard()
           this.LogoutCard()
-
-          Blank()
-            .height(120)
+          Blank().height(120)
         }
-        .padding({
-          left: 24,
-          right: 24,
-          bottom: 24
-        })
+        .padding({ left: 24, right: 24, bottom: 24 })
       }
       .scrollBar(BarState.On)
     }
@@ -180,38 +109,20 @@ export struct ServicePage {
   }
 
   @Builder
-  private TitleBar() {
-    Column() {
-      Text('服务控制')
-        .fontSize(38)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#F5D8A3')
-
-      Divider()
-        .width(80)
-        .height(2)
-        .color('#D6B16A')
-        .margin({ top: 8 })
-    }
-    .width('100%')
-    .padding({ top: 60, bottom: 30 })
-  }
-
-  @Builder
   private ServiceSwitchArea() {
     Row({ space: 18 }) {
       ServiceToggleCard({
         icon: $r('app.media.service_icon_do_not_disturb'),
         title: '请勿打扰',
-        isOn: this.viewModel.disturbMode,
-        onToggleHandler: () => this.viewModel.toggleDisturbMode()
+        isOn: this.serviceVM.disturbMode,
+        onToggleHandler: () => this.serviceVM.toggleDisturbMode()
       })
 
       ServiceToggleCard({
         icon: $r('app.media.service_icon_clean_room'),
         title: '清理房间',
-        isOn: this.viewModel.cleanRoom,
-        onToggleHandler: () => this.viewModel.toggleCleanRoom()
+        isOn: this.serviceVM.cleanRoom,
+        onToggleHandler: () => this.serviceVM.toggleCleanRoom()
       })
     }
   }
@@ -244,10 +155,7 @@ export struct ServicePage {
     .padding(20)
     .backgroundColor(this.isSosCalling ? 'rgba(255,50,50,0.25)' : 'rgba(0,30,80,0.92)')
     .borderRadius(24)
-    .border({
-      width: 1,
-      color: this.isSosCalling ? '#FF4444' : '#6EA8FF'
-    })
+    .border({ width: 1, color: this.isSosCalling ? '#FF4444' : '#6EA8FF' })
     .shadow({
       radius: 25,
       color: this.isSosCalling ? 'rgba(255,80,80,0.4)' : 'rgba(80,120,255,0.25)'
@@ -266,7 +174,7 @@ export struct ServicePage {
         .borderRadius(24)
 
       // 太阳图标（晴天显示）
-      if (this.currentWeather && this.currentWeather.condition === 'sunny') {
+      if (this.weatherVM.currentWeather && this.weatherVM.currentWeather.condition === 'sunny') {
         Image($r('app.media.service_sun'))
           .width(100)
           .height(100)
@@ -274,18 +182,18 @@ export struct ServicePage {
       }
 
       // 云朵动画（仅多云显示）
-      if (this.currentWeather && this.currentWeather.condition === 'cloudy') {
+      if (this.weatherVM.currentWeather && this.weatherVM.currentWeather.condition === 'cloudy') {
         Row() {
           Circle().width(40).height(40).fill('#FFFFFF').opacity(0.6)
           Circle().width(50).height(50).fill('#FFFFFF').opacity(0.7)
           Circle().width(35).height(35).fill('#FFFFFF').opacity(0.6)
         }
-        .translate({ x: this.cloudOffset, y: 20 })
+        .translate({ x: this.weatherVM.cloudOffset, y: 20 })
       }
 
       // 雨滴动画（雨天显示）
-      if (this.currentWeather && this.currentWeather.condition === 'rainy') {
-        ForEach(this.rainDrops, (drop: RainDrop) => {
+      if (this.weatherVM.currentWeather && this.weatherVM.currentWeather.condition === 'rainy') {
+        ForEach(this.weatherVM.rainDrops, (drop: RainDrop) => {
           Column()
             .width(2)
             .height(drop.length)
@@ -297,8 +205,8 @@ export struct ServicePage {
       }
 
       // 雪花动画（雪天显示）
-      if (this.currentWeather && this.currentWeather.condition === 'snowy') {
-        ForEach(this.snowDrops, (drop: RainDrop) => {
+      if (this.weatherVM.currentWeather && this.weatherVM.currentWeather.condition === 'snowy') {
+        ForEach(this.weatherVM.snowDrops, (drop: RainDrop) => {
           Circle()
             .width(drop.length)
             .height(drop.length)
@@ -324,7 +232,7 @@ export struct ServicePage {
   @Builder
   private CitySearchInput() {
     Row() {
-      TextInput({ placeholder: '输入城市名搜索', text: this.viewModel.weatherViewModel.citySearchText })
+      TextInput({ placeholder: '输入城市名搜索', text: this.weatherVM.citySearchText })
         .width('100%')
         .height(44)
         .fontSize(16)
@@ -334,11 +242,11 @@ export struct ServicePage {
         .borderRadius(8)
         .padding({ left: 12, right: 12 })
         .onChange((value: string) => {
-          this.viewModel.weatherViewModel.updateCitySearch(value)
+          this.weatherVM.updateCitySearch(value)
         })
         .onSubmit(() => {
-          this.viewModel.weatherViewModel.applyFirstResult()
-          this.loadWeather()
+          this.weatherVM.applyFirstResult()
+          this.weatherVM.loadWeather()
         })
     }
     .width('100%')
@@ -347,19 +255,19 @@ export struct ServicePage {
 
   @Builder
   private SearchResultsList() {
-    if (this.viewModel.weatherViewModel.searchResults.length > 0 && this.viewModel.weatherViewModel.citySearchText.length > 0) {
+    if (this.weatherVM.searchResults.length > 0 && this.weatherVM.citySearchText.length > 0) {
       Column() {
         Scroll() {
           Column() {
-            ForEach(this.viewModel.weatherViewModel.searchResults, (city: CityInfo) => {
+            ForEach(this.weatherVM.searchResults, (city: CityInfo) => {
               Text(city.name + (city.distance !== undefined ? ` (${city.distance}km)` : ''))
                 .fontSize(14)
-                .fontColor(this.isCitySelected(city) ? '#E8C27F' : '#FFFFFF')
+                .fontColor(this.weatherVM.selectedCityIndex === this.weatherVM.getCityIndexByAdcode(city.adcode) ? '#E8C27F' : '#FFFFFF')
                 .width('100%')
                 .padding({ top: 8, bottom: 8 })
                 .onClick(() => {
-                  this.viewModel.weatherViewModel.selectCity(this.viewModel.weatherViewModel.getCityIndexByAdcode(city.adcode))
-                  this.loadWeather()
+                  this.weatherVM.selectCity(this.weatherVM.getCityIndexByAdcode(city.adcode))
+                  this.weatherVM.loadWeather()
                 })
             })
           }
@@ -375,15 +283,11 @@ export struct ServicePage {
     }
   }
 
-  private isCitySelected(city: CityInfo): boolean {
-    return this.viewModel.weatherViewModel.selectedCityIndex === this.viewModel.weatherViewModel.getCityIndexByAdcode(city.adcode)
-  }
-
   @Builder
   private WeatherInfo() {
     Column() {
       // 城市名称
-      Text(this.currentCity.name)
+      Text(this.weatherVM.currentCity.name)
         .fontSize(16)
         .fontColor('rgba(255,255,255,0.8)')
         .margin({ bottom: 4 })
@@ -391,12 +295,12 @@ export struct ServicePage {
       // 温度和天气信息
       Row() {
         Column() {
-          if (this.currentWeather) {
-            Text(this.currentWeather.temperature.toString())
+          if (this.weatherVM.currentWeather) {
+            Text(this.weatherVM.currentWeather.temperature.toString())
               .fontSize(72)
               .fontWeight(FontWeight.Bold)
               .fontColor('#FFFFFF')
-            Text(this.getConditionText(this.currentWeather.condition))
+            Text(this.weatherVM.getConditionText(this.weatherVM.currentWeather.condition))
               .fontSize(24)
               .fontColor('#FFFFFF')
           } else {
@@ -414,11 +318,11 @@ export struct ServicePage {
         Blank()
 
         Column() {
-          if (this.currentWeather) {
-            Text('湿度 ' + this.currentWeather.humidity + '%')
+          if (this.weatherVM.currentWeather) {
+            Text('湿度 ' + this.weatherVM.currentWeather.humidity + '%')
               .fontSize(14)
               .fontColor('rgba(255,255,255,0.85)')
-            Text(this.currentWeather.windDirection + ' ' + this.currentWeather.windPower)
+            Text(this.weatherVM.currentWeather.windDirection + ' ' + this.weatherVM.currentWeather.windPower)
               .fontSize(14)
               .fontColor('rgba(255,255,255,0.85)')
               .margin({ top: 6 })
@@ -461,10 +365,7 @@ export struct ServicePage {
     }
     .width('100%')
     .height(120)
-    .padding({
-      left: 24,
-      right: 24
-    })
+    .padding({ left: 24, right: 24 })
     .backgroundColor('rgba(10,28,65,0.88)')
     .borderRadius(24)
     .border({ width: 1, color: '#CDA15C' })
